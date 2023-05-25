@@ -2,7 +2,7 @@
 <package format="2">
   <name>gp4_lego</name>
   <version>0.0.0</version>
-  <description>The fanuc ros controller package</description>
+  <description>The gp4 lego package</description>
 
   <maintainer email="ruixuanl@andrew.cmu.edu">ruic</maintainer>
 
