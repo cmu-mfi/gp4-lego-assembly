@@ -6,6 +6,8 @@
 #include "ros/ros.h"
 #include <ros/package.h>
 #include "std_msgs/Float32MultiArray.h"
+#include "geometry_msgs/Pose.h"
+#include <gp4_lego/MakeMove.h>
 #include <fstream>
 #include <unistd.h>
 using namespace std::chrono;
@@ -29,14 +31,21 @@ int main(int argc, char **argv)
     try
     {
         ros::init(argc, argv, "task_planning_node");
-        ros::NodeHandle nh("~");
+        // ros::NodeHandle nh("~");
+        ros::NodeHandle nh;
+        ros::NodeHandle private_node_handle("~");
+
+        std::string base_frame;
+        private_node_handle.param<std::string>("base_frame", base_frame, "world");
         ROS_INFO_STREAM("namespace of nh = " << nh.getNamespace());
         std::string config_fname, root_pwd, task_fname, DH_fname, DH_tool_fname, DH_tool_assemble_fname, DH_tool_disassemble_fname, 
                     robot_base_fname, gazebo_env_setup_fname;
         bool use_robot;
         bool IK_status;
-        nh.getParam("config_fname", config_fname);
-        nh.getParam("root_pwd", root_pwd);
+        // nh.getParam("config_fname", config_fname);
+        // nh.getParam("root_pwd", root_pwd);
+        config_fname = "/home/icl/catkin_ws/src/gp4-lego-assembly/config/user_config.json";
+        root_pwd = "/home/icl/catkin_ws/src/gp4-lego-assembly/";
 
         std::ifstream config_file(config_fname, std::ifstream::binary);
         Json::Value config;
@@ -55,7 +64,7 @@ int main(int argc, char **argv)
         std::ifstream task_file(task_fname, std::ifstream::binary);
         Json::Value task_json;
         task_file >> task_json;
-        ros::Rate loop_rate(150);
+        ros::Rate loop_rate(10);
 
         gp4_lego::lego::Lego_Gazebo::Ptr lego_gazebo_ptr = std::make_shared<gp4_lego::lego::Lego_Gazebo>();
         lego_gazebo_ptr->setup(gazebo_env_setup_fname, assemble, task_json);
@@ -73,10 +82,13 @@ int main(int argc, char **argv)
         Eigen::MatrixXd twist_T(4, 4);
         Eigen::MatrixXd cart_T(4, 4);
         int twist_deg = 14;
-        double incremental_deg = 7;
+        double incremental_deg = twist_deg;
         int twist_idx = 0;
         int twist_num = twist_deg / incremental_deg;
        
+        ros::ServiceClient client = nh.serviceClient<gp4_lego::MakeMove>("make_a_move");
+        gp4_lego::MakeMove srv;
+
         ros::Publisher goal_pub = nh.advertise<std_msgs::Float32MultiArray>("goal", robot_dof);
         ros::Subscriber robot_state_sub = nh.subscribe("robot_state", robot_dof * 3, robotStateCallback);
         std_msgs::Float32MultiArray goal_msg;
@@ -256,12 +268,26 @@ int main(int argc, char **argv)
                                                                           robot->robot_base_inv(), robot->robot_tool_assemble_inv(),0,IK_status);
                 }
             }
-            goal_msg.data.clear();
-            for(int j=0; j<robot_dof; j++)
+
+            Eigen::MatrixXd cart_T_goal = gp4_lego::math::FK(cur_goal, robot->robot_DH_tool(), robot->robot_base(), false);
+            Eigen::Matrix3d goal_rot = cart_T_goal.block(0, 0, 3, 3);
+            Eigen::Quaterniond quat(goal_rot);
+            
+            geometry_msgs::Pose goal_pose;
+            goal_pose.position.x = cart_T_goal(0, 3);
+            goal_pose.position.y = cart_T_goal(1, 3);
+            goal_pose.position.z = cart_T_goal(2, 3);
+            goal_pose.orientation.x = quat.x();
+            goal_pose.orientation.y = quat.y();
+            goal_pose.orientation.z = quat.z();
+            goal_pose.orientation.w = quat.w();
+            srv.request.base_frame = "world";
+            srv.request.pose = goal_pose;
+            ROS_INFO_STREAM("Sending pose: " << goal_pose);
+            if(client.call(srv))
             {
-                goal_msg.data.push_back(cur_goal(j));
+                ROS_INFO_STREAM("Pose Set to: " << srv.response.pose);
             }
-            goal_pub.publish(goal_msg);
             ros::spinOnce();
         }
         ROS_INFO_STREAM("Task Execution Done!");

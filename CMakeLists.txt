@@ -21,8 +21,9 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   image_transport
   cv_bridge
+  message_generation
 )
-catkin_package()
+
 include_directories(
     include
     ${OpenCV_INCLUDE_DIRS}
@@ -44,6 +45,12 @@ target_link_libraries(${PROJECT_NAME}
     jsoncpp
 )
 
+# target_link_libraries(move_for_lego
+#   ${catkin_LIBRARIES}
+# )
+
+
+
 target_include_directories(${PROJECT_NAME} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
@@ -53,13 +60,29 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     VERSION ${PROJECT_VERSION}
     SOVERSION 1)
 
+add_service_files(
+  FILES
+  MakeMove.srv
+  GetPose.srv
+)
 
+generate_messages(
+  DEPENDENCIES
+  geometry_msgs
+  std_msgs
+)
+catkin_package(
+  CATKIN_DEPENDS
+  message_runtime
+)
 
 # /* -------------------------------------------------------------------------- */
 # /*                             Testing Executables                            */
 # /* -------------------------------------------------------------------------- */
 
-
+add_executable(
+  service_sample_node src/ros_nodes/service_sample_node.cpp
+)
 
 
 add_executable(${PROJECT_NAME}_task_planning_cartesian
@@ -72,3 +95,9 @@ target_link_libraries(${PROJECT_NAME}_task_planning_cartesian
 
 install(DIRECTORY launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+
+
+
+target_link_libraries(service_sample_node
+  ${catkin_LIBRARIES}
+)

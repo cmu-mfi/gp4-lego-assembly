@@ -1,0 +1,2 @@
+host_ip: "172.26.37.21" # Change the IP to the IP of your PC.
+host_udp_port: 11311
