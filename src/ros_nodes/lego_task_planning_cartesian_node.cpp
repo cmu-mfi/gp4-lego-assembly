@@ -44,8 +44,10 @@ int main(int argc, char **argv)
         bool IK_status;
         // nh.getParam("config_fname", config_fname);
         // nh.getParam("root_pwd", root_pwd);
-        config_fname = "/home/icl/catkin_ws/src/gp4-lego-assembly/config/user_config.json";
-        root_pwd = "/home/icl/catkin_ws/src/gp4-lego-assembly/";
+        config_fname = "/home/ruixuan/catkin_ws/src/gp4-lego-assembly/config/user_config.json";
+        root_pwd = "/home/ruixuan/catkin_ws/src/gp4-lego-assembly/";
+        ros::AsyncSpinner async_spinner(1);
+        async_spinner.start();
 
         std::ifstream config_file(config_fname, std::ifstream::binary);
         Json::Value config;
@@ -288,7 +290,7 @@ int main(int argc, char **argv)
             {
                 ROS_INFO_STREAM("Pose Set to: " << srv.response.pose);
             }
-            ros::spinOnce();
+            // ros::spinOnce();
         }
         ROS_INFO_STREAM("Task Execution Done!");
         ros::shutdown();
