@@ -1,0 +1,9 @@
+<launch>
+    <node name="gp4_lego_task_planning_cartesian_sim" pkg="gp4_lego" type="gp4_lego_task_planning_cartesian_sim" output="screen" required="true">
+        <param name="config_fname" value="$(find gp4_lego)/config/user_config.json"/>
+        <param name="root_pwd" value="$(find gp4_lego)/"/>
+        <remap from="/gp4_lego_task_planning_cartesian_sim/robot_state" to="/gp4_lego_bringup/robot_state"/>
+        <remap from="/gp4_lego_task_planning_cartesian_sim/goal" to="/gp4_lego_bringup/robot_goal"/>
+    </node>
+
+</launch>

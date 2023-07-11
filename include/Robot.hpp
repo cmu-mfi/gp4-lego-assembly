@@ -23,7 +23,7 @@ class Robot
         int njoints_ = 6;
         double margin_ = 0.05; // m
         double delta_t_ = 0.008; // ms. Traj frequency
-        std::string robot_name_ = "FANUC LRMate200iD7L";
+        std::string robot_name_ = "gp4";
         Eigen::MatrixXd q_;
         Eigen::MatrixXd qd_;
         Eigen::MatrixXd qdd_;

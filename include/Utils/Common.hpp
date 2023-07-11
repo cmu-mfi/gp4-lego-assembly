@@ -23,6 +23,9 @@ This notice must appear in all copies of this file and its derivatives.
     #undef DEBUG_PRINT
 #endif
 
+#include <stdio.h> 
+#include <stdlib.h> 
+#include <unistd.h> 
 #include <cstdio>
 #include <ctime>
 #include <chrono>
@@ -46,5 +49,7 @@ This notice must appear in all copies of this file and its derivatives.
 #include <chrono>
 #include <jsoncpp/json/json.h>
 #include <jsoncpp/json/value.h>
+#include "ros/ros.h"
+#include <ros/package.h>
 
 using namespace std::chrono;

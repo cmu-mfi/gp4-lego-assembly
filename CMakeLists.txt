@@ -45,12 +45,6 @@ target_link_libraries(${PROJECT_NAME}
     jsoncpp
 )
 
-# target_link_libraries(move_for_lego
-#   ${catkin_LIBRARIES}
-# )
-
-
-
 target_include_directories(${PROJECT_NAME} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
@@ -85,6 +79,14 @@ add_executable(
 )
 
 
+add_executable(${PROJECT_NAME}_bringup
+  src/ros_nodes/controller_node.cpp
+)
+target_link_libraries(${PROJECT_NAME}_bringup
+    ${PROJECT_NAME}
+    ${catkin_LIBRARIES}
+)
+
 add_executable(${PROJECT_NAME}_task_planning_cartesian
   src/ros_nodes/lego_task_planning_cartesian_node.cpp
 )
@@ -93,11 +95,23 @@ target_link_libraries(${PROJECT_NAME}_task_planning_cartesian
     ${catkin_LIBRARIES}
 )
 
-install(DIRECTORY launch
-  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
-
+add_executable(${PROJECT_NAME}_task_planning_cartesian_sim
+  src/ros_nodes/lego_task_planning_cartesian_sim_node.cpp
+)
+target_link_libraries(${PROJECT_NAME}_task_planning_cartesian_sim
+    ${PROJECT_NAME}
+    ${catkin_LIBRARIES}
+)
 
 
 target_link_libraries(service_sample_node
   ${catkin_LIBRARIES}
 )
+
+
+
+install(DIRECTORY launch
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
+
+
+
