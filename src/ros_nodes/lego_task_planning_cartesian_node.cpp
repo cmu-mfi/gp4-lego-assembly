@@ -41,10 +41,10 @@ int main(int argc, char **argv)
         std::string config_fname, root_pwd, task_fname, DH_fname, DH_tool_fname, DH_tool_assemble_fname, DH_tool_disassemble_fname, 
                     robot_base_fname, gazebo_env_setup_fname;
         bool IK_status;
-        nh.getParam("config_fname", config_fname);
-        nh.getParam("root_pwd", root_pwd);
-        // config_fname = "/home/ruixuan/catkin_ws/src/gp4-lego-assembly/config/user_config.json";
-        // root_pwd = "/home/ruixuan/catkin_ws/src/gp4-lego-assembly/";
+        // nh.getParam("config_fname", config_fname);
+        // nh.getParam("root_pwd", root_pwd);
+        config_fname = "/home/mfi/repos/ros1_ws/src/gp4-lego-assembly/config/user_config.json";
+        root_pwd = "/home/mfi/repos/ros1_ws/src/gp4-lego-assembly/";
         ros::AsyncSpinner async_spinner(1);
         async_spinner.start();
 
@@ -120,7 +120,8 @@ int main(int argc, char **argv)
         int pre_mode = -1;
         gp4_lego::math::VectorJd cur_goal = home_q;
         std::string brick_name;
-        
+        bool move_on_to_next = true;
+
         while(ros::ok)
         {
             auto loop_start = high_resolution_clock::now();
@@ -139,7 +140,7 @@ int main(int argc, char **argv)
                 }
             }
             pre_mode = mode;
-            if(robot->reached_goal(cur_goal) && robot->is_static())
+            if(move_on_to_next)//robot->reached_goal(cur_goal) && robot->is_static())
             {
                 if(mode == 10){
                     if(task_idx >= num_tasks && !infinite_tasks && assemble)
@@ -288,24 +289,29 @@ int main(int argc, char **argv)
             cart_T_goal = gp4_lego::math::FK(cur_goal, robot->robot_DH(), robot->robot_base(), false);
             Eigen::Matrix3d goal_rot = cart_T_goal.block(0, 0, 3, 3);
             Eigen::Quaterniond quat(goal_rot);
-            
-            geometry_msgs::Pose goal_pose;
-            goal_pose.position.x = cart_T_goal(0, 3);
-            goal_pose.position.y = cart_T_goal(1, 3);
-            goal_pose.position.z = cart_T_goal(2, 3);
-            goal_pose.orientation.x = quat.x();
-            goal_pose.orientation.y = quat.y();
-            goal_pose.orientation.z = quat.z();
-            goal_pose.orientation.w = quat.w();
-            srv.request.base_frame = "world";
-            srv.request.pose = goal_pose;
-            ROS_INFO_STREAM("Sending pose: " << goal_pose);
+           
+            if(move_on_to_next)
+            {
+                geometry_msgs::Pose goal_pose;
+                goal_pose.position.x = cart_T_goal(0, 3);
+                goal_pose.position.y = cart_T_goal(1, 3);
+                goal_pose.position.z = cart_T_goal(2, 3);
+                goal_pose.orientation.x = quat.x();
+                goal_pose.orientation.y = quat.y();
+                goal_pose.orientation.z = quat.z();
+                goal_pose.orientation.w = quat.w();
+                move_on_to_next = false;
+                srv.request.base_frame = "base_link";
+                srv.request.pose = goal_pose;
+                ROS_INFO_STREAM("Sending pose: " << goal_pose);
+            }
             if(client.call(srv))
             {
+                move_on_to_next = true;
                 ROS_INFO_STREAM("Pose Set to: " << srv.response.pose);
             }
             // ros::spinOnce();
-        }
+        }	    
         ROS_INFO_STREAM("Task Execution Done!");
         ros::shutdown();
         return 0;
