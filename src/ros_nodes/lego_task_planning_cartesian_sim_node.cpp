@@ -79,10 +79,16 @@ int main(int argc, char **argv)
         ros::Publisher goal_pub = nh.advertise<std_msgs::Float32MultiArray>("goal", robot_dof);
         ros::Subscriber robot_state_sub = nh.subscribe("robot_state", robot_dof * 3, robotStateCallback);
         std_msgs::Float32MultiArray goal_msg;
+        double ik_iter_num = 0.02;
+        int max_iter = 100000;
         
         int num_tasks = task_json.size();
         Eigen::MatrixXd home_q(robot_dof, 1);
-        home_q.col(0) << 0, 20, -20, 0, -60, 0; // Home
+        home_q.col(0) << 0, 0, 0, 0, -90, 0; // Home
+        Eigen::Matrix4d home_T = gp4_lego::math::FK(home_q, robot->robot_DH(), robot->robot_base(), false);
+        home_T.col(3) << 0.3, 0, 0.5, 1;
+        home_q = gp4_lego::math::IK(home_q, home_T.block(0, 3, 3, 1), home_T.block(0, 0, 3, 3), 
+                                                   robot->robot_DH(), robot->robot_base(), 0, max_iter, ik_iter_num); 
 
         int mode = 0; // 0: home, 1: pick up, 2, pick down 3: pick twist 4: pick twist up 5: home
                       // 6: drop up 7: drop down 8: drop twist 9: drop twist up 10: done
@@ -99,8 +105,6 @@ int main(int argc, char **argv)
         int pre_mode = -1;
         gp4_lego::math::VectorJd cur_goal = home_q;
         std::string brick_name;
-        double ik_iter_num = 0.02;
-        int max_iter = 100000;
         
         while(ros::ok)
         {
