@@ -8,5 +8,6 @@
     "task_graph_fname":"/config/assembly_tasks/wtts.json",
     "JPC_travel_time":0.5,
     "Infinite_tasks":0,
-    "Start_with_assemble":1
+    "Start_with_assemble":1,
+    "Use_robot":0
 }

@@ -600,8 +600,9 @@ void Lego_Gazebo::update(const std::string& brick_name, const Eigen::Matrix4d& T
     cur_brick_T.col(3) << cur_brick.cur_x, cur_brick.cur_y, cur_brick.cur_z, 1;
     cur_brick_T.block(0, 0, 3, 3) << cur_brick.cur_quat.normalized().toRotationMatrix();
 
-    Eigen::Matrix3d y_180, z_90;
+    Eigen::Matrix3d y_180, z_90, z_180;
     z_90 << 0.0, -1.0, 0.0, 1.0, 0.0, 0.0, 0.0, 0.0, 1.0;
+    z_180 << -1.0, 0.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, 1.0;
     y_180 << -1.0, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0, 0.0, -1.0;
     Eigen::Matrix3d rot_mtx = T_init.block(0, 0, 3, 3) * y_180;
     if(cur_brick.press_side == 1 || cur_brick.press_side == 4)
@@ -610,7 +611,7 @@ void Lego_Gazebo::update(const std::string& brick_name, const Eigen::Matrix4d& T
     }
     else
     {
-        rot_mtx = rot_mtx * z_90;
+        rot_mtx = rot_mtx * z_90 * z_180;
         tmp.col(3) << (brick_width * P_len - brick_len_offset) / 2.0, 0, 0, 1;
     }
     new_brick_T = T_init * tmp;

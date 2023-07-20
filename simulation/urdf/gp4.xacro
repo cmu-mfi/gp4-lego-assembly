@@ -309,13 +309,13 @@
     </joint>
 
     <joint name="link_6_fts" type="fixed">
-      <origin xyz="${0.0445/2} 0 0" rpy="0 ${pi/2.0} 0" />
+      <origin xyz="${0.0395/2} 0 0" rpy="0 ${pi/2.0} 0" />
       <parent link="flange" />
       <child link="fts" />
     </joint>
 
     <joint name="fts_tool" type="revolute">
-      <origin xyz="0 0 ${0.0445/2}" rpy="0 0 ${pi}" />
+      <origin xyz="0 0 ${0.0395/2}" rpy="0 0 ${pi}" />
       <parent link="fts" />
       <child link="link_tool" />
       <axis xyz="0 0 1" />

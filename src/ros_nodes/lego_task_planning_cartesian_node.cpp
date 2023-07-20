@@ -31,8 +31,8 @@ int main(int argc, char **argv)
     try
     {
         ros::init(argc, argv, "task_planning_node");
-        // ros::NodeHandle nh("~");
-        ros::NodeHandle nh;
+        ros::NodeHandle nh("~");
+        // ros::NodeHandle nh;
         ros::NodeHandle private_node_handle("~");
 
         std::string base_frame;
@@ -41,10 +41,10 @@ int main(int argc, char **argv)
         std::string config_fname, root_pwd, task_fname, DH_fname, DH_tool_fname, DH_tool_assemble_fname, DH_tool_disassemble_fname, 
                     robot_base_fname, gazebo_env_setup_fname;
         bool IK_status;
-        // nh.getParam("config_fname", config_fname);
-        // nh.getParam("root_pwd", root_pwd);
-        config_fname = "/home/mfi/repos/ros1_ws/src/gp4-lego-assembly/config/user_config.json";
-        root_pwd = "/home/mfi/repos/ros1_ws/src/gp4-lego-assembly/";
+        nh.getParam("config_fname", config_fname);
+        nh.getParam("root_pwd", root_pwd);
+        // config_fname = "/home/mfi/repos/ros1_ws/src/gp4-lego-assembly/config/user_config.json";
+        // root_pwd = "/home/mfi/repos/ros1_ws/src/gp4-lego-assembly/";
         ros::AsyncSpinner async_spinner(1);
         async_spinner.start();
 
@@ -60,11 +60,12 @@ int main(int argc, char **argv)
         task_fname = root_pwd + config["task_graph_fname"].asString();
         bool infinite_tasks = config["Infinite_tasks"].asBool();
         bool assemble = config["Start_with_assemble"].asBool();
+        bool use_robot = config["Use_robot"].asBool();
 
         std::ifstream task_file(task_fname, std::ifstream::binary);
         Json::Value task_json;
         task_file >> task_json;
-        ros::Rate loop_rate(10);
+        ros::Rate loop_rate(150);
 
         gp4_lego::lego::Lego_Gazebo::Ptr lego_gazebo_ptr = std::make_shared<gp4_lego::lego::Lego_Gazebo>();
         lego_gazebo_ptr->setup(gazebo_env_setup_fname, assemble, task_json);
@@ -140,8 +141,12 @@ int main(int argc, char **argv)
                 }
             }
             pre_mode = mode;
-            if(move_on_to_next)//robot->reached_goal(cur_goal) && robot->is_static())
+            if((use_robot && move_on_to_next) || (!use_robot && robot->reached_goal(cur_goal) && robot->is_static()))
             {
+                if(mode == 7)
+                {
+                    lego_gazebo_ptr->update_brick_connection();
+                }
                 if(mode == 10){
                     if(task_idx >= num_tasks && !infinite_tasks && assemble)
                     {
@@ -214,11 +219,8 @@ int main(int argc, char **argv)
                 }
                 else if(mode == 2)
                 {
-                    // cart_T(2, 3) = cart_T(2, 3) - 0.002;
                     cur_goal =  gp4_lego::math::IK(cur_goal, cart_T.block(0, 3, 3, 1), cart_T.block(0, 0, 3, 3), 
-                                                   robot->robot_DH_tool(), robot->robot_base(), 0, max_iter, ik_iter_num); 
-                    // cur_goal =  gp4_lego::math::IK_closed_form(cur_goal, cart_T, robot->robot_DH_tool(), 
-                    //                                                       robot->robot_base_inv(), robot->robot_tool_inv(), 0, IK_status);
+                                                   robot->robot_DH_tool(), robot->robot_base(), 0, max_iter, ik_iter_num);
                 }
                 else if(mode == 3)
                 {
@@ -232,8 +234,6 @@ int main(int argc, char **argv)
                     cart_T = cart_T * twist_T;
                     cur_goal =  gp4_lego::math::IK(cur_goal, cart_T.block(0, 3, 3, 1), cart_T.block(0, 0, 3, 3), 
                                                    robot->robot_DH_tool_disassemble(), robot->robot_base(), 0, max_iter, ik_iter_num); 
-                    // cur_goal =  gp4_lego::math::IK_closed_form(cur_goal, cart_T, robot->robot_DH_tool_disassemble(), 
-                    //                                                       robot->robot_base_inv(), robot->robot_tool_disassemble_inv(),0,IK_status);
                 }
                 else if(mode == 4 || mode == 9)
                 {
@@ -241,8 +241,6 @@ int main(int argc, char **argv)
                     cart_T(2, 3) = cart_T(2, 3) + 0.015;
                     cur_goal =  gp4_lego::math::IK(cur_goal, cart_T.block(0, 3, 3, 1), cart_T.block(0, 0, 3, 3), 
                                                    robot->robot_DH_tool_assemble(), robot->robot_base(), 0, max_iter, ik_iter_num); 
-                    // cur_goal =  gp4_lego::math::IK_closed_form(cur_goal, cart_T, robot->robot_DH_tool_assemble(), 
-                    //                                                       robot->robot_base_inv(), robot->robot_tool_assemble_inv(),0,IK_status);
                 }
                 else if(mode == 6)
                 {
@@ -258,8 +256,6 @@ int main(int argc, char **argv)
                     up_T(2, 3) = up_T(2, 3) + 0.015;
                     cur_goal =  gp4_lego::math::IK(cur_goal, up_T.block(0, 3, 3, 1), up_T.block(0, 0, 3, 3), 
                                                    robot->robot_DH_tool(), robot->robot_base(), 0, max_iter, ik_iter_num); 
-                    // cur_goal =  gp4_lego::math::IK_closed_form(cur_goal, up_T, robot->robot_DH_tool(), 
-                    //                                                       robot->robot_base_inv(), robot->robot_tool_inv(),0,IK_status);
                 }
                 else if(mode == 7)
                 {
@@ -289,26 +285,38 @@ int main(int argc, char **argv)
             cart_T_goal = gp4_lego::math::FK(cur_goal, robot->robot_DH(), robot->robot_base(), false);
             Eigen::Matrix3d goal_rot = cart_T_goal.block(0, 0, 3, 3);
             Eigen::Quaterniond quat(goal_rot);
-           
-            if(move_on_to_next)
+
+            // Simulation command
+            goal_msg.data.clear();
+            for(int j=0; j<robot_dof; j++)
             {
-                geometry_msgs::Pose goal_pose;
-                goal_pose.position.x = cart_T_goal(0, 3);
-                goal_pose.position.y = cart_T_goal(1, 3);
-                goal_pose.position.z = cart_T_goal(2, 3);
-                goal_pose.orientation.x = quat.x();
-                goal_pose.orientation.y = quat.y();
-                goal_pose.orientation.z = quat.z();
-                goal_pose.orientation.w = quat.w();
-                move_on_to_next = false;
-                srv.request.base_frame = "base_link";
-                srv.request.pose = goal_pose;
-                ROS_INFO_STREAM("Sending pose: " << goal_pose);
+                goal_msg.data.push_back(cur_goal(j));
             }
-            if(client.call(srv))
+            goal_pub.publish(goal_msg);
+
+            // Robot command
+            if(use_robot)
             {
-                move_on_to_next = true;
-                ROS_INFO_STREAM("Pose Set to: " << srv.response.pose);
+                if(move_on_to_next)
+                {
+                    geometry_msgs::Pose goal_pose;
+                    goal_pose.position.x = cart_T_goal(0, 3);
+                    goal_pose.position.y = cart_T_goal(1, 3);
+                    goal_pose.position.z = cart_T_goal(2, 3);
+                    goal_pose.orientation.x = quat.x();
+                    goal_pose.orientation.y = quat.y();
+                    goal_pose.orientation.z = quat.z();
+                    goal_pose.orientation.w = quat.w();
+                    move_on_to_next = false;
+                    srv.request.base_frame = "base_link";
+                    srv.request.pose = goal_pose;
+                    ROS_INFO_STREAM("Sending pose: " << goal_pose);
+                }
+                if(client.call(srv))
+                {
+                    move_on_to_next = true;
+                    ROS_INFO_STREAM("Pose Set to: " << srv.response.pose);
+                }
             }
             // ros::spinOnce();
         }	    
