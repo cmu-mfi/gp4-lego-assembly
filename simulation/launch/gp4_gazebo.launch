@@ -6,7 +6,9 @@
   <arg name="gui" default="true"/>
   <arg name="headless" default="false"/>
   <arg name="debug" default="false"/>
+  <arg name="namespace" />
 
+  <group ns="$(arg namespace)/sim">
   <!-- the include to include other launch files  -->
   <include
     file="$(find gazebo_ros)/launch/empty_world.launch">
@@ -35,9 +37,10 @@
   <rosparam file="$(find gp4_lego)/simulation/launch/control.yaml" command="load"/>
 
   <!-- load the controllers -->
-  <node name="controller_spawner" pkg="controller_manager" type="spawner" respawn="false" ns="/gp4_gazebo"
+  <node name="controller_spawner_sim" pkg="controller_manager" type="spawner" respawn="false"
     output="screen" 
-    args="joint_state_controller
+	  args="--namespace=$(arg namespace)/sim
+	  joint_state_controller
           joint1_position_controller
           joint2_position_controller
           joint3_position_controller
@@ -47,11 +50,12 @@
   />
   
   <!-- convert joint states to TF transforms for rviz, etc -->
-  <node name = "robot_state_publisher" pkg = "robot_state_publisher" type = "robot_state_publisher"
+  <node name = "robot_state_publisher_sim" pkg = "robot_state_publisher" type = "robot_state_publisher"
     respawn="false" output="screen">
     <remap from="/joint_states" to="/gp4_gazebo/joint_states" />
   </node>
 
 
   <include file="$(find gp4_lego)/simulation/launch/controller_node.launch"/>
+  </group>
 </launch>

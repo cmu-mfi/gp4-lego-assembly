@@ -31,8 +31,8 @@ int main(int argc, char **argv)
     try
     {
         ros::init(argc, argv, "task_planning_node");
-        ros::NodeHandle nh("~");
-        // ros::NodeHandle nh;
+        //ros::NodeHandle nh("~");
+        ros::NodeHandle nh;
         ros::NodeHandle private_node_handle("~");
 
         std::string base_frame;
@@ -41,10 +41,10 @@ int main(int argc, char **argv)
         std::string config_fname, root_pwd, task_fname, DH_fname, DH_tool_fname, DH_tool_assemble_fname, DH_tool_disassemble_fname, 
                     robot_base_fname, gazebo_env_setup_fname;
         bool IK_status;
-        nh.getParam("config_fname", config_fname);
-        nh.getParam("root_pwd", root_pwd);
-        // config_fname = "/home/mfi/repos/ros1_ws/src/gp4-lego-assembly/config/user_config.json";
-        // root_pwd = "/home/mfi/repos/ros1_ws/src/gp4-lego-assembly/";
+        private_node_handle.getParam("config_fname", config_fname);
+        private_node_handle.getParam("root_pwd", root_pwd);
+        //config_fname = "/home/mfi/repos/ros1_ws/src/gp4-lego-assembly/config/user_config.json";
+        //root_pwd = "/home/mfi/repos/ros1_ws/src/gp4-lego-assembly/";
         ros::AsyncSpinner async_spinner(1);
         async_spinner.start();
 

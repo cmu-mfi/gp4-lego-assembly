@@ -357,7 +357,7 @@
 
   <gazebo>
     <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
-      <robotNamespace>/gp4_gazebo</robotNamespace>
+	    <!--<robotNamespace>/gp4_gazebo</robotNamespace>-->
       <robotSimType>gazebo_ros_control/DefaultRobotHWSim</robotSimType>
       <legacyModeNS>true</legacyModeNS>
     </plugin>
@@ -366,7 +366,7 @@
   <gazebo>
     <provideFeedback>true</provideFeedback>
       <plugin name="ft_sensor" filename="libgazebo_ros_ft_sensor.so">
-      <robotNamespace>/gp4_gazebo</robotNamespace>
+		      <!--<robotNamespace>/gp4_gazebo</robotNamespace>-->
           <alwaysOn> true </alwaysOn>
           <updateRate>125.0</updateRate>
           <topicName>ft_sensor</topicName>
