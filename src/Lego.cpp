@@ -611,7 +611,15 @@ void Lego_Gazebo::update(const std::string& brick_name, const Eigen::Matrix4d& T
     }
     else
     {
-        rot_mtx = rot_mtx * z_90 * z_180;
+        if(math::ApproxEqNum(cur_brick.cur_quat.x(), 0, EPS) && math::ApproxEqNum(cur_brick.cur_quat.y(), 0,EPS) && math::ApproxEqNum(cur_brick.cur_quat.z(), 0,EPS) ||
+           math::ApproxEqNum(cur_brick.cur_quat.x(), 0,EPS) && math::ApproxEqNum(cur_brick.cur_quat.y(), 0,EPS) && math::ApproxEqNum(cur_brick.cur_quat.z(), 1,EPS))
+        {
+            rot_mtx = rot_mtx * z_90 * z_180;
+        }
+        else
+        {
+            rot_mtx = rot_mtx * z_90;
+        }
         tmp.col(3) << (brick_width * P_len - brick_len_offset) / 2.0, 0, 0, 1;
     }
     new_brick_T = T_init * tmp;
