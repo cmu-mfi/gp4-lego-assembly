@@ -74,11 +74,6 @@ catkin_package(
 # /*                             Testing Executables                            */
 # /* -------------------------------------------------------------------------- */
 
-add_executable(
-  service_sample_node src/ros_nodes/service_sample_node.cpp
-)
-
-
 add_executable(${PROJECT_NAME}_bringup
   src/ros_nodes/controller_node.cpp
 )
@@ -94,12 +89,6 @@ target_link_libraries(${PROJECT_NAME}_task_planning_cartesian
     ${PROJECT_NAME}
     ${catkin_LIBRARIES}
 )
-
-
-target_link_libraries(service_sample_node
-  ${catkin_LIBRARIES}
-)
-
 
 
 install(DIRECTORY launch
