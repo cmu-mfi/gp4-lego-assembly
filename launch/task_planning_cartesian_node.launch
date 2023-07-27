@@ -1,13 +1,11 @@
 <launch>
-	<arg name="namespace" />
+	<arg name="namespace" default="/yaskawa_gp4"/>
     <group ns="$(arg namespace)">
-	    
     <node name="gp4_lego_task_planning_cartesian" pkg="gp4_lego" type="gp4_lego_task_planning_cartesian" output="screen" required="true">
         <param name="config_fname" value="$(find gp4_lego)/config/user_config.json"/>
         <param name="root_pwd" value="$(find gp4_lego)/"/>
-        <remap from="/sim/gp4_lego_task_planning_cartesian/robot_state" to="/sim/gp4_lego_bringup/robot_state"/>
-        <remap from="/sim/gp4_lego_task_planning_cartesian/goal" to="/sim/gp4_lego_bringup/robot_goal"/>
+        <remap from="$(arg namespace)/robot_state" to="$(arg namespace)/sim/gp4_lego_bringup/robot_state"/>
+        <remap from="$(arg namespace)/goal" to="$(arg namespace)/sim/gp4_lego_bringup/robot_goal"/>
     </node>
-
     </group>
 </launch>

@@ -95,14 +95,6 @@ target_link_libraries(${PROJECT_NAME}_task_planning_cartesian
     ${catkin_LIBRARIES}
 )
 
-add_executable(${PROJECT_NAME}_task_planning_cartesian_sim
-  src/ros_nodes/lego_task_planning_cartesian_sim_node.cpp
-)
-target_link_libraries(${PROJECT_NAME}_task_planning_cartesian_sim
-    ${PROJECT_NAME}
-    ${catkin_LIBRARIES}
-)
-
 
 target_link_libraries(service_sample_node
   ${catkin_LIBRARIES}
