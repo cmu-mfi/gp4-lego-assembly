@@ -1,44 +1,18 @@
 <launch>
-    <arg name="namespace"/>
-    <group if="$(eval namespace == '/yaskawa_gp4/sim')">
-            <arg name="config_fname1" value="$(find gp4_lego)/config/user_config_A.json"/>
-            <node name="gp4_lego_bringup" pkg="gp4_lego" type="gp4_lego_bringup" output="screen" required="true">
-            <param name="root_pwd" value="$(find gp4_lego)/"/>
-            <param name="config_fname" value="$(arg config_fname1)"/>
-            <remap from="$(arg namespace)/gp4_lego_bringup/j1_pub" to="$(arg namespace)/joint1_position_controller/command"/>
-            <remap from="$(arg namespace)/gp4_lego_bringup/j2_pub" to="$(arg namespace)/joint2_position_controller/command"/>
-            <remap from="$(arg namespace)/gp4_lego_bringup/j3_pub" to="$(arg namespace)/joint3_position_controller/command"/>
-            <remap from="$(arg namespace)/gp4_lego_bringup/j4_pub" to="$(arg namespace)/joint4_position_controller/command"/>
-            <remap from="$(arg namespace)/gp4_lego_bringup/j5_pub" to="$(arg namespace)/joint5_position_controller/command"/>
-            <remap from="$(arg namespace)/gp4_lego_bringup/j6_pub" to="$(arg namespace)/joint6_position_controller/command"/>
-    </node>
-    </group>
-    <group if="$(eval namespace == '/developer/sim')">
-            <arg name="config_fname1" value="$(find gp4_lego)/config/user_config_D.json"/>
-            <node name="gp4_lego_bringup" pkg="gp4_lego" type="gp4_lego_bringup" output="screen" required="true">
-            <param name="root_pwd" value="$(find gp4_lego)/"/>
-            <param name="config_fname" value="$(arg config_fname1)"/>
-            <remap from="$(arg namespace)/gp4_lego_bringup/j1_pub" to="$(arg namespace)/joint1_position_controller/command"/>
-            <remap from="$(arg namespace)/gp4_lego_bringup/j2_pub" to="$(arg namespace)/joint2_position_controller/command"/>
-            <remap from="$(arg namespace)/gp4_lego_bringup/j3_pub" to="$(arg namespace)/joint3_position_controller/command"/>
-            <remap from="$(arg namespace)/gp4_lego_bringup/j4_pub" to="$(arg namespace)/joint4_position_controller/command"/>
-            <remap from="$(arg namespace)/gp4_lego_bringup/j5_pub" to="$(arg namespace)/joint5_position_controller/command"/>
-            <remap from="$(arg namespace)/gp4_lego_bringup/j6_pub" to="$(arg namespace)/joint6_position_controller/command"/>
-    </node>
-    </group>
-    <group if="$(eval namespace == '/architect/sim')">
-            <arg name="config_fname1" value="$(find gp4_lego)/config/user_config_A.json"/>
-            <node name="gp4_lego_bringup" pkg="gp4_lego" type="gp4_lego_bringup" output="screen" required="true">
-            <param name="root_pwd" value="$(find gp4_lego)/"/>
-            <param name="config_fname" value="$(arg config_fname1)"/>
-            <remap from="$(arg namespace)/gp4_lego_bringup/j1_pub" to="$(arg namespace)/joint1_position_controller/command"/>
-            <remap from="$(arg namespace)/gp4_lego_bringup/j2_pub" to="$(arg namespace)/joint2_position_controller/command"/>
-            <remap from="$(arg namespace)/gp4_lego_bringup/j3_pub" to="$(arg namespace)/joint3_position_controller/command"/>
-            <remap from="$(arg namespace)/gp4_lego_bringup/j4_pub" to="$(arg namespace)/joint4_position_controller/command"/>
-            <remap from="$(arg namespace)/gp4_lego_bringup/j5_pub" to="$(arg namespace)/joint5_position_controller/command"/>
-            <remap from="$(arg namespace)/gp4_lego_bringup/j6_pub" to="$(arg namespace)/joint6_position_controller/command"/>
-    </node>
-    </group>
+	<arg name="namespace" />
 
-    
+	<arg if="$(eval namespace == 'yaskawa_gp4/sim')" name="config_fname1" value="$(find gp4_lego)/config/user_config_A.json" />
+	<arg if="$(eval namespace == 'yk_destroyer/sim')" name="config_fname1" value="$(find gp4_lego)/config/user_config_D.json" />
+	<arg if="$(eval namespace == 'yk_architect/sim')" name="config_fname1" value="$(find gp4_lego)/config/user_config_A.json" />
+
+	<node name="gp4_lego_bringup" pkg="gp4_lego" type="gp4_lego_bringup" output="screen" required="true">
+		<param name="root_pwd" value="$(find gp4_lego)/" />
+		<param name="config_fname" value="$(arg config_fname1)" />
+		<remap from="$(arg namespace)/gp4_lego_bringup/j1_pub" to="$(arg namespace)/joint1_position_controller/command" />
+		<remap from="$(arg namespace)/gp4_lego_bringup/j2_pub" to="$(arg namespace)/joint2_position_controller/command" />
+		<remap from="$(arg namespace)/gp4_lego_bringup/j3_pub" to="$(arg namespace)/joint3_position_controller/command" />
+		<remap from="$(arg namespace)/gp4_lego_bringup/j4_pub" to="$(arg namespace)/joint4_position_controller/command" />
+		<remap from="$(arg namespace)/gp4_lego_bringup/j5_pub" to="$(arg namespace)/joint5_position_controller/command" />
+		<remap from="$(arg namespace)/gp4_lego_bringup/j6_pub" to="$(arg namespace)/joint6_position_controller/command" />
+	</node>
 </launch>

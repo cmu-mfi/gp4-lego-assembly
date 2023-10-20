@@ -1,34 +1,19 @@
 <launch>
-	<arg name="namespace" default="/yaskawa_gp4"/>
-    <group ns="$(arg namespace)">
+	<arg name="namespace" default="yaskawa_gp4" />
+	<group ns="$(arg namespace)">
 
-    <group if="$(eval namespace == '/yaskawa_gp4')">
-            <arg name="config_fname1" value="$(find gp4_lego)/config/user_config_A.json"/>
-            <node name="gp4_lego_task_planning_cartesian" pkg="gp4_lego" type="gp4_lego_task_planning_cartesian" output="screen" required="true">
-            <param name="config_fname" value="$(arg config_fname1)"/>
-            <param name="root_pwd" value="$(find gp4_lego)/"/>
-            <remap from="$(arg namespace)/robot_state" to="$(arg namespace)/sim/gp4_lego_bringup/robot_state"/>
-            <remap from="$(arg namespace)/goal" to="$(arg namespace)/sim/gp4_lego_bringup/robot_goal"/>
-    </node>
-    </group>
-    <group if="$(eval namespace == '/developer')">
-            <arg name="config_fname1" value="$(find gp4_lego)/config/user_config_D.json"/>
-            <node name="gp4_lego_task_planning_cartesian" pkg="gp4_lego" type="gp4_lego_task_planning_cartesian" output="screen" required="true">
-            <param name="config_fname" value="$(arg config_fname1)"/>
-            <param name="root_pwd" value="$(find gp4_lego)/"/>
-            <remap from="$(arg namespace)/robot_state" to="$(arg namespace)/sim/gp4_lego_bringup/robot_state"/>
-            <remap from="$(arg namespace)/goal" to="$(arg namespace)/sim/gp4_lego_bringup/robot_goal"/>
-    </node>
-    </group>
-    <group if="$(eval namespace == '/architect')">
-            <arg name="config_fname1" value="$(find gp4_lego)/config/user_config_A.json"/>
-            <node name="gp4_lego_task_planning_cartesian" pkg="gp4_lego" type="gp4_lego_task_planning_cartesian" output="screen" required="true">
-            <param name="config_fname" value="$(arg config_fname1)"/>
-            <param name="root_pwd" value="$(find gp4_lego)/"/>
-            <remap from="$(arg namespace)/robot_state" to="$(arg namespace)/sim/gp4_lego_bringup/robot_state"/>
-            <remap from="$(arg namespace)/goal" to="$(arg namespace)/sim/gp4_lego_bringup/robot_goal"/>
-    </node>
-    </group>
-    
-    </group>
+		<arg if="$(eval namespace == 'yaskawa_gp4')" name="config_fname1" value="$(find gp4_lego)/config/user_config_A.json" />
+		<arg if="$(eval namespace == 'yk_architect')" name="config_fname1" value="$(find gp4_lego)/config/user_config_A.json" />
+		<arg if="$(eval namespace == 'yk_destroyer')" name="config_fname1" value="$(find gp4_lego)/config/user_config_D.json" />		
+
+		<node name="gp4_lego_task_planning_cartesian" pkg="gp4_lego" type="gp4_lego_task_planning_cartesian" output="screen" required="true">
+			<param name="config_fname" value="$(arg config_fname1)" />
+			<param name="root_pwd" value="$(find gp4_lego)/" />
+			<param if="$(eval namespace == 'yk_destroyer')" name="x_home" value="0.1" />
+			<param if="$(eval namespace == 'yk_destroyer')" name="y_home" value="0.3" />
+			<remap from="$(arg namespace)/robot_state" to="$(arg namespace)/sim/gp4_lego_bringup/robot_state" />
+			<remap from="$(arg namespace)/goal" to="$(arg namespace)/sim/gp4_lego_bringup/robot_goal" />
+		</node>
+
+	</group>
 </launch>
