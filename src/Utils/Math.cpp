@@ -688,6 +688,8 @@ VectorJd IK(const VectorJd& q, const Eigen::Matrix<double, 3, 1>& cart_goal, con
     Eigen::MatrixXd J, J_inv, d_th;
     Vector6d error = get_6d_error(pos_s, quat_s, pos_e, quat_e);
     uint iter_num = 0;
+    std::cout << "Init robot q: " << q << std::endl;
+    std::cout << cart_goal << std::endl;
 
     while(abs(error(0)) > eps(0) || abs(error(1)) > eps(1) || abs(error(2)) > eps(2) ||
           abs(error(3)) > eps(3) || abs(error(4)) > eps(4) || abs(error(5)) > eps(5))
@@ -695,6 +697,7 @@ VectorJd IK(const VectorJd& q, const Eigen::Matrix<double, 3, 1>& cart_goal, con
         if(iter_num >= max_iter)
         {
             std::cout << "IK failed!" << std::endl;
+            std::cout << error << std::endl;
             theta = theta_init;
             break;
         }

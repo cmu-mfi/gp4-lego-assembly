@@ -1,8 +1,8 @@
 <launch>
-	<arg name="namespace" default="yaskawa_gp4" />
+	<arg name="namespace" default="sim" />
 	<group ns="$(arg namespace)">
 
-		<arg if="$(eval namespace == 'yaskawa_gp4')" name="config_fname1" value="$(find gp4_lego)/config/user_config_A.json" />
+		<arg if="$(eval namespace == 'sim')" name="config_fname1" value="$(find gp4_lego)/config/user_config_A.json" />
 		<arg if="$(eval namespace == 'yk_architect')" name="config_fname1" value="$(find gp4_lego)/config/user_config_A.json" />
 		<arg if="$(eval namespace == 'yk_destroyer')" name="config_fname1" value="$(find gp4_lego)/config/user_config_D.json" />		
 

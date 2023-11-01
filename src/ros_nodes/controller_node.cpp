@@ -23,7 +23,7 @@ int main(int argc, char **argv)
         double jpc_travel_time = 0.0;
         ros::init(argc, argv, "controller_node");
         ros::NodeHandle nh("~");
-        ROS_INFO_STREAM("namespace of nh = " << nh.getNamespace());
+        ROS_INFO_STREAM("namespace of controller nh = " << nh.getNamespace());
         std::string config_fname, root_pwd, DH_fname, robot_base_fname;
         nh.getParam("config_fname", config_fname);
         nh.getParam("root_pwd", root_pwd);

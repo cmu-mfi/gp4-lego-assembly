@@ -46,7 +46,7 @@ int main(int argc, char **argv)
 
         // get params from launch file
         private_node_handle.param<std::string>("base_frame", base_frame, "world");
-        ROS_INFO_STREAM("namespace of nh = " << nh.getNamespace());
+        ROS_INFO_STREAM("namespace of task_planning nh = " << nh.getNamespace());
         private_node_handle.getParam("config_fname", config_fname);
         private_node_handle.getParam("root_pwd", root_pwd);
         private_node_handle.param<float>("x_home", x_home, 0.3);
@@ -100,7 +100,7 @@ int main(int argc, char **argv)
         int num_tasks = task_json.size();
         int twist_idx = 0;
         double ik_step = 10e-4;
-        int max_iter = 10e7;
+        int max_iter = 10e6;
         int grab_brick;
         std_msgs::Float32MultiArray goal_msg;
         Eigen::Matrix4d cart_T_goal;
@@ -121,7 +121,7 @@ int main(int argc, char **argv)
         Eigen::MatrixXd home_q(ROBOT_DOF, 1);
         home_q.col(0) << 0, 0, 0, 0, -90, 0; // Home
         Eigen::Matrix4d home_T = gp4_lego::math::FK(home_q, robot->robot_DH(), robot->robot_base(), false);
-        home_T.col(3) << x_home, y_home, 0.5, 1; // Home X, Y, Z in base frame of the Flange (tool0) ??TODO??
+        home_T.col(3) << x_home, y_home, 0.4, 1; // Home X, Y, Z in base frame of the Flange (tool0) ??TODO??
         home_q = gp4_lego::math::IK(home_q, home_T.block(0, 3, 3, 1), home_T.block(0, 0, 3, 3),
                                     robot->robot_DH(), robot->robot_base(), 0, max_iter, ik_step);
 
@@ -139,8 +139,8 @@ int main(int argc, char **argv)
         // MFI::YK_Interface yk_interface(namespace);
 
         // VIRTUAL CONTROLLER INTERFACE ??TODO??
-        ros::Publisher goal_pub = nh.advertise<std_msgs::Float32MultiArray>("goal", ROBOT_DOF);
-        ros::Subscriber robot_state_sub = nh.subscribe("robot_state", ROBOT_DOF * 3, robotStateCallback);
+        ros::Publisher goal_pub = nh.advertise<std_msgs::Float32MultiArray>("sim/gp4_lego_bringup/robot_goal", ROBOT_DOF);
+        ros::Subscriber robot_state_sub = nh.subscribe("sim/gp4_lego_bringup/robot_state", ROBOT_DOF * 3, robotStateCallback);
 
         // F. MAIN LOOP
         //*****************************************************************************************
@@ -156,7 +156,7 @@ int main(int argc, char **argv)
         {
             // F.1. DETERMINE AND CALCULATE GOAL
             //*************************************************************************************
-            auto loop_start = high_resolution_clock::now();
+            
             robot->set_robot_q(robot_q);
             robot->set_robot_qd(robot_qd);
             robot->set_robot_qdd(robot_qdd);
@@ -332,6 +332,9 @@ int main(int argc, char **argv)
             // F.2.2. Robot command
             if (use_robot)
             {
+                auto motion_start = high_resolution_clock::now();
+                auto motion_end = high_resolution_clock::now();
+                // auto motion_start, motion_end;
                 geometry_msgs::Pose goal_pose;
                 if (move_on_to_next)
                 {
@@ -344,6 +347,7 @@ int main(int argc, char **argv)
                     goal_pose.orientation.w = quat.w();
                     move_on_to_next = false;
                     ROS_INFO_STREAM("Sending pose: " << goal_pose);
+                    motion_start = high_resolution_clock::now();
                 }
 
                 /** TODO: USE SERVICE INTERFACE TO SEND GOAL TO ROBOT
@@ -354,6 +358,9 @@ int main(int argc, char **argv)
                 {
                     move_on_to_next = true;
                     ROS_INFO_STREAM("Pose Set to: " << srv.response.pose);
+                    motion_end = high_resolution_clock::now();
+                    auto duration = duration_cast<microseconds>(motion_end - motion_start);
+                    ROS_INFO_STREAM("Motion Execution time: " << duration.count() / 1000000.0 << " s");
                 }
 
                 /** TODO: USE YK_API TO SEND GOAL TO ROBOT
