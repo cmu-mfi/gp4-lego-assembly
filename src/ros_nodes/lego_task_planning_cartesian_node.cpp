@@ -71,6 +71,10 @@ int main(int argc, char **argv)
         bool infinite_tasks = config["Infinite_tasks"].asBool();
         bool assemble = config["Start_with_assemble"].asBool();
         bool use_robot = config["Use_robot"].asBool();
+        bool use_ik = config["IK"]["Use_IK"].asBool();
+        bool record_joints = config["IK"]["Record_Joint_Waypoints"].asBool();
+        std::string record_waypoints_fname = root_pwd + config["IK"]["Record_Waypoints_fname"].asString();
+        Eigen::MatrixXd waypoints = gp4_lego::io::LoadMatFromFile(record_waypoints_fname);
 
         std::ifstream task_file(task_fname, std::ifstream::binary);
         Json::Value task_json;
@@ -92,6 +96,8 @@ int main(int argc, char **argv)
         Eigen::MatrixXd twist_R(3, 3);
         Eigen::MatrixXd twist_T(4, 4);
         Eigen::MatrixXd cart_T(4, 4);
+        Eigen::MatrixXd record(500, ROBOT_DOF);
+        int record_idx = 0;
 
         int twist_deg = 12;
         double incremental_deg = twist_deg;
@@ -99,7 +105,7 @@ int main(int argc, char **argv)
 
         int num_tasks = task_json.size();
         int twist_idx = 0;
-        double ik_step = 10e-4;
+        double ik_step = 10e-3;
         int max_iter = 10e6;
         int grab_brick;
         std_msgs::Float32MultiArray goal_msg;
@@ -146,6 +152,8 @@ int main(int argc, char **argv)
         //*****************************************************************************************
         int pre_mode = -1;
         gp4_lego::math::VectorJd cur_goal = home_q;
+        record.row(record_idx) << cur_goal(0), cur_goal(1), cur_goal(2), cur_goal(3), cur_goal(4), cur_goal(5);
+        record_idx ++;
         std::string brick_name;
         bool move_on_to_next = true;
 
@@ -197,6 +205,10 @@ int main(int argc, char **argv)
                     {
                         task_idx--;
                         assemble = !assemble;
+                        if(record_joints)
+                        {
+                            break;
+                        }
                     }
                     mode = 0;
                     if (assemble)
@@ -240,10 +252,11 @@ int main(int argc, char **argv)
                                                           cur_graph_node["press_side"].asInt(), cart_T);
                     Eigen::Matrix4d up_T = cart_T;
                     up_T(2, 3) = up_T(2, 3) + 0.015;
-                    cur_goal = gp4_lego::math::IK(cur_goal, up_T.block(0, 3, 3, 1), up_T.block(0, 0, 3, 3),
-                                                  robot->robot_DH_tool(), robot->robot_base(), 0, max_iter, ik_step);
-                    // cur_goal =  gp4_lego::math::IK_closed_form(cur_goal, up_T, robot->robot_DH_tool(),
-                    //                                                       robot->robot_base_inv(), robot->robot_tool_inv(), 0, IK_status);
+                    if(use_ik)
+                    {
+                        cur_goal = gp4_lego::math::IK(cur_goal, up_T.block(0, 3, 3, 1), up_T.block(0, 0, 3, 3),
+                                                      robot->robot_DH_tool(), robot->robot_base(), 0, max_iter, ik_step);
+                    }
                     if (!assemble && lego_gazebo_ptr->brick_instock(brick_name))
                     {
                         cur_goal = home_q;
@@ -252,8 +265,11 @@ int main(int argc, char **argv)
                 }
                 else if (mode == 2)
                 {
-                    cur_goal = gp4_lego::math::IK(cur_goal, cart_T.block(0, 3, 3, 1), cart_T.block(0, 0, 3, 3),
-                                                  robot->robot_DH_tool(), robot->robot_base(), 0, max_iter, ik_step);
+                    if(use_ik)
+                    {
+                        cur_goal = gp4_lego::math::IK(cur_goal, cart_T.block(0, 3, 3, 1), cart_T.block(0, 0, 3, 3),
+                                                      robot->robot_DH_tool(), robot->robot_base(), 0, max_iter, ik_step);
+                    }
                 }
                 else if (mode == 3)
                 {
@@ -265,15 +281,21 @@ int main(int argc, char **argv)
                     twist_T.block(0, 0, 3, 3) << twist_R;
                     cart_T = gp4_lego::math::FK(cur_goal, robot->robot_DH_tool_disassemble(), robot->robot_base(), false);
                     cart_T = cart_T * twist_T;
-                    cur_goal = gp4_lego::math::IK(cur_goal, cart_T.block(0, 3, 3, 1), cart_T.block(0, 0, 3, 3),
-                                                  robot->robot_DH_tool_disassemble(), robot->robot_base(), 0, max_iter, ik_step);
+                    if(use_ik)
+                    {
+                        cur_goal = gp4_lego::math::IK(cur_goal, cart_T.block(0, 3, 3, 1), cart_T.block(0, 0, 3, 3),
+                                                      robot->robot_DH_tool_disassemble(), robot->robot_base(), 0, max_iter, ik_step);
+                    }
                 }
                 else if (mode == 4 || mode == 9)
                 {
                     cart_T = gp4_lego::math::FK(cur_goal, robot->robot_DH_tool_assemble(), robot->robot_base(), false);
                     cart_T(2, 3) = cart_T(2, 3) + 0.015;
-                    cur_goal = gp4_lego::math::IK(cur_goal, cart_T.block(0, 3, 3, 1), cart_T.block(0, 0, 3, 3),
-                                                  robot->robot_DH_tool_assemble(), robot->robot_base(), 0, max_iter, ik_step);
+                    if(use_ik)
+                    {
+                        cur_goal = gp4_lego::math::IK(cur_goal, cart_T.block(0, 3, 3, 1), cart_T.block(0, 0, 3, 3),
+                                                      robot->robot_DH_tool_assemble(), robot->robot_base(), 0, max_iter, ik_step);
+                    }
                 }
                 else if (mode == 6)
                 {
@@ -287,16 +309,19 @@ int main(int argc, char **argv)
                                                           cur_graph_node["press_side"].asInt(), cart_T);
                     Eigen::Matrix4d up_T = cart_T;
                     up_T(2, 3) = up_T(2, 3) + 0.015;
-                    cur_goal = gp4_lego::math::IK(cur_goal, up_T.block(0, 3, 3, 1), up_T.block(0, 0, 3, 3),
-                                                  robot->robot_DH_tool(), robot->robot_base(), 0, max_iter, ik_step);
+                    if(use_ik)
+                    {
+                        cur_goal = gp4_lego::math::IK(cur_goal, up_T.block(0, 3, 3, 1), up_T.block(0, 0, 3, 3),
+                                                      robot->robot_DH_tool(), robot->robot_base(), 0, max_iter, ik_step);
+                    }
                 }
                 else if (mode == 7)
                 {
-                    // cart_T(2, 3) = cart_T(2, 3) - 0.0035;
-                    cur_goal = gp4_lego::math::IK(cur_goal, cart_T.block(0, 3, 3, 1), cart_T.block(0, 0, 3, 3),
-                                                  robot->robot_DH_tool(), robot->robot_base(), 0, max_iter, ik_step);
-                    // cur_goal =  gp4_lego::math::IK_closed_form(cur_goal, cart_T, robot->robot_DH_tool(),
-                    //                                                       robot->robot_base_inv(), robot->robot_tool_inv(),0,IK_status);
+                    if(use_ik)
+                    {
+                        cur_goal = gp4_lego::math::IK(cur_goal, cart_T.block(0, 3, 3, 1), cart_T.block(0, 0, 3, 3),
+                                                      robot->robot_DH_tool(), robot->robot_base(), 0, max_iter, ik_step);
+                    }
                 }
                 else if (mode == 8)
                 {
@@ -308,11 +333,27 @@ int main(int argc, char **argv)
                     twist_T.block(0, 0, 3, 3) << twist_R;
                     cart_T = gp4_lego::math::FK(cur_goal, robot->robot_DH_tool_assemble(), robot->robot_base(), false);
                     cart_T = cart_T * twist_T;
-                    cur_goal = gp4_lego::math::IK(cur_goal, cart_T.block(0, 3, 3, 1), cart_T.block(0, 0, 3, 3),
-                                                  robot->robot_DH_tool_assemble(), robot->robot_base(), 0, max_iter, ik_step);
-                    // cur_goal =  gp4_lego::math::IK_closed_form(cur_goal, cart_T, robot->robot_DH_tool_assemble(),
-                    //                                                       robot->robot_base_inv(), robot->robot_tool_assemble_inv(),0,IK_status);
+                    if(use_ik)
+                    {
+                        cur_goal = gp4_lego::math::IK(cur_goal, cart_T.block(0, 3, 3, 1), cart_T.block(0, 0, 3, 3),
+                                                      robot->robot_DH_tool_assemble(), robot->robot_base(), 0, max_iter, ik_step);
+                    }
                 }
+                if(!use_ik)
+                {
+                    if(assemble)
+                    {
+                        cur_goal = waypoints.row((task_idx - 1) * 11 + mode);
+                        ROS_INFO_STREAM("Replay Row: " << (task_idx - 1) * 11 + mode);
+                    }
+                    else
+                    {
+                        cur_goal = waypoints.row((2 * num_tasks - task_idx) * 11 + mode);
+                        ROS_INFO_STREAM("Replay Row: " << (2 * num_tasks - task_idx) * 11 + mode);
+                    }
+                }
+                record.row(record_idx) << cur_goal(0), cur_goal(1), cur_goal(2), cur_goal(3), cur_goal(4), cur_goal(5);
+                record_idx ++;
             }
 
             cart_T_goal = gp4_lego::math::FK(cur_goal, robot->robot_DH(), robot->robot_base(), false);
@@ -373,6 +414,10 @@ int main(int argc, char **argv)
         }
 
         ROS_INFO_STREAM("Task Execution Done!");
+        if(record_joints)
+        {
+            gp4_lego::io::SaveMatToFile(record.block(0, 0, record_idx, ROBOT_DOF), record_waypoints_fname);
+        }
         ros::shutdown();
         return 0;
     }
