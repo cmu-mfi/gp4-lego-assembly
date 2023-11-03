@@ -74,7 +74,12 @@ int main(int argc, char **argv)
         bool use_ik = config["IK"]["Use_IK"].asBool();
         bool record_joints = config["IK"]["Record_Joint_Waypoints"].asBool();
         std::string record_waypoints_fname = root_pwd + config["IK"]["Record_Waypoints_fname"].asString();
-        Eigen::MatrixXd waypoints = gp4_lego::io::LoadMatFromFile(record_waypoints_fname);
+        Eigen::MatrixXd waypoints(500, ROBOT_DOF);
+        if(!use_ik)
+        {
+            waypoints = gp4_lego::io::LoadMatFromFile(record_waypoints_fname);
+        }
+        
 
         std::ifstream task_file(task_fname, std::ifstream::binary);
         Json::Value task_json;
