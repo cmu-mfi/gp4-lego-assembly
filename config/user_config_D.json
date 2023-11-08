@@ -12,7 +12,7 @@
     "Use_robot":1,
     "IK":
     {
-        "Use_IK":1,
+        "Use_IK":0,
         "Record_Joint_Waypoints":0,
         "Record_Waypoints_fname":"/record_tasks/pyramid.txt"
     }

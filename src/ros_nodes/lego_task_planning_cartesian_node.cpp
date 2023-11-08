@@ -43,6 +43,8 @@ int main(int argc, char **argv)
         std::string base_frame;
         std::string config_fname, root_pwd;
         float x_home, y_home;
+        unsigned int second = 1000000;
+        usleep(10 * second);
 
         // get params from launch file
         private_node_handle.param<std::string>("base_frame", base_frame, "world");

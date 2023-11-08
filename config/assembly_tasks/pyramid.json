@@ -1,20 +1,20 @@
 {
     "1":
     {
-        "y":11,
-        "x":6,
+        "y":10,
+        "x":10,
         "z":1,
-        "brick_id":3,
+        "brick_id":5,
         "ori":0,
         "brick_seq":1,
         "press_side":1
     },
     "2":
     {
-        "y":11,
+        "y":16,
         "x":10,
         "z":1,
-        "brick_id":3,
+        "brick_id":5,
         "ori":0,
         "brick_seq":2,
         "press_side":1
@@ -22,38 +22,18 @@
     "3":
     {
         "y":12,
-        "x":7,
+        "x":10,
         "z":2,
-        "brick_id":5,
-        "ori":1,
+        "brick_id":6,
+        "ori":0,
         "brick_seq":1,
         "press_side":1
     },
     "4":
     {
-        "y":15,
-        "x":7,
-        "z":2,
-        "brick_id":5,
-        "ori":1,
-        "brick_seq":2,
-        "press_side":1
-    },
-    "5":
-    {
-        "y":12,
-        "x":8,
+        "y":14,
+        "x":10,
         "z":3,
-        "brick_id":2,
-        "ori":0,
-        "brick_seq":1,
-        "press_side":1
-    },
-    "6":
-    {
-        "y":13,
-        "x":8,
-        "z":4,
         "brick_id":9,
         "ori":0,
         "brick_seq":1,
