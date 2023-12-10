@@ -53,6 +53,7 @@ int main(int argc, char **argv)
         private_node_handle.getParam("root_pwd", root_pwd);
         private_node_handle.param<float>("x_home", x_home, 0.3);
         private_node_handle.param<float>("y_home", y_home, 0.0);
+        ros::ServiceClient set_state_client = nh.serviceClient<gazebo_msgs::SetModelState>("/gazebo/set_model_state");
 
         ros::AsyncSpinner async_spinner(1);
         async_spinner.start();
@@ -70,6 +71,7 @@ int main(int argc, char **argv)
         std::string robot_base_fname = root_pwd + config["robot_base_fname"].asString();
         std::string gazebo_env_setup_fname = root_pwd + config["env_setup_fname"].asString();
         std::string task_fname = root_pwd + config["task_graph_fname"].asString();
+        std::string lego_lib_fname = root_pwd + config["lego_lib_fname"].asString();
         bool infinite_tasks = config["Infinite_tasks"].asBool();
         bool assemble = config["Start_with_assemble"].asBool();
         bool use_robot = config["Use_robot"].asBool();
@@ -90,7 +92,9 @@ int main(int argc, char **argv)
         // C. GP4_LEGO INITIALIZATION
         //*****************************************************************************************
         gp4_lego::lego::Lego_Gazebo::Ptr lego_gazebo_ptr = std::make_shared<gp4_lego::lego::Lego_Gazebo>();
-        lego_gazebo_ptr->setup(gazebo_env_setup_fname, assemble, task_json);
+        lego_gazebo_ptr->setup(gazebo_env_setup_fname, lego_lib_fname, assemble, task_json, 
+                               DH_fname, DH_tool_fname, DH_tool_disassemble_fname, DH_tool_assemble_fname, 
+                               robot_base_fname, set_state_client);
 
         gp4_lego::robot::Robot::Ptr robot = std::make_shared<gp4_lego::robot::Robot>();
         robot->Setup(DH_fname, robot_base_fname);
