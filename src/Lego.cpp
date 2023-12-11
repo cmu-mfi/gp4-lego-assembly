@@ -107,7 +107,7 @@ void Lego_Gazebo::setup(const std::string& env_setup_fname, const std::string& l
             lego_brick l_brick;
             l_brick.brick_name = brick.name();
             brick_dimension_from_name(brick.name(), l_brick.height, l_brick.width, lego_library);
-            calc_brick_loc(l_brick, storage_plate_, 0,
+            calc_brick_loc(l_brick, storage_plate_, (*brick)["ori"].asInt(),
                            (*brick)["x"].asInt(), (*brick)["y"].asInt(), (*brick)["z"].asInt(),
                            brick_pose_mtx);
             x = brick_pose_mtx(0, 3);
@@ -138,6 +138,10 @@ void Lego_Gazebo::setup(const std::string& env_setup_fname, const std::string& l
         brick_pose.pose.position.x = x;
         brick_pose.pose.position.y = y;
         brick_pose.pose.position.z = z;
+        brick_pose.pose.orientation.x = quat.x();
+        brick_pose.pose.orientation.y = quat.y();
+        brick_pose.pose.orientation.z = quat.z();
+        brick_pose.pose.orientation.w = quat.w();
         setmodelstate_.request.model_state = brick_pose;
         client_.call(setmodelstate_);
     }
