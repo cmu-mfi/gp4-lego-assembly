@@ -94,7 +94,7 @@ int main(int argc, char **argv)
         gp4_lego::lego::Lego_Gazebo::Ptr lego_gazebo_ptr = std::make_shared<gp4_lego::lego::Lego_Gazebo>();
         lego_gazebo_ptr->setup(gazebo_env_setup_fname, lego_lib_fname, assemble, task_json, 
                                DH_fname, DH_tool_fname, DH_tool_disassemble_fname, DH_tool_assemble_fname, 
-                               robot_base_fname, set_state_client);
+                               robot_base_fname, 1, set_state_client);
 
         gp4_lego::robot::Robot::Ptr robot = std::make_shared<gp4_lego::robot::Robot>();
         robot->Setup(DH_fname, robot_base_fname);

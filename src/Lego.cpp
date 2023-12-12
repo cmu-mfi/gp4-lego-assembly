@@ -10,7 +10,7 @@ Lego_Gazebo::Lego_Gazebo()
         
 void Lego_Gazebo::setup(const std::string& env_setup_fname, const std::string& lego_lib_fname, const bool& assemble, const Json::Value& task_json, 
                  const std::string& DH_fname, const std::string& DH_tool_fname, const std::string& DH_tool_disassemble_fname, const std::string& DH_tool_assemble_fname, 
-                 const std::string& base_fname, const ros::ServiceClient& cli)
+                 const std::string& base_fname, const bool& use_config_file, const ros::ServiceClient& cli)
 {
     client_ = cli;
 
@@ -41,22 +41,24 @@ void Lego_Gazebo::setup(const std::string& env_setup_fname, const std::string& l
         brick_pose.model_name = brick.name();
         if(brick.name().compare("storage_plate") == 0)
         {
-            storage_plate_.x = (*brick)["x"].asDouble();
-            storage_plate_.y = (*brick)["y"].asDouble();
-            storage_plate_.z = (*brick)["z"].asDouble();
-            storage_plate_.roll = (*brick)["roll"].asDouble();
-            storage_plate_.pitch = (*brick)["pitch"].asDouble();
-            storage_plate_.yaw = (*brick)["yaw"].asDouble();
-            Eigen::AngleAxisd rollAngle(storage_plate_.roll, Eigen::Vector3d::UnitX());
-            Eigen::AngleAxisd pitchAngle(storage_plate_.pitch, Eigen::Vector3d::UnitY());
-            Eigen::AngleAxisd yawAngle(storage_plate_.yaw, Eigen::Vector3d::UnitZ());
-            storage_plate_.quat = yawAngle * pitchAngle * rollAngle;
-            storage_plate_.pose = Eigen::Matrix4d::Identity(4, 4);
-            storage_plate_.pose.block(0, 0, 3, 3) = storage_plate_.quat.matrix();
-            storage_plate_.pose.col(3) << storage_plate_.x, storage_plate_.y, storage_plate_.z, 1;
-            storage_plate_.width = (*brick)["width"].asInt();
-            storage_plate_.height = (*brick)["height"].asInt();
-            
+            if(use_config_file)
+            {
+                storage_plate_.x = (*brick)["x"].asDouble();
+                storage_plate_.y = (*brick)["y"].asDouble();
+                storage_plate_.z = (*brick)["z"].asDouble();
+                storage_plate_.roll = (*brick)["roll"].asDouble();
+                storage_plate_.pitch = (*brick)["pitch"].asDouble();
+                storage_plate_.yaw = (*brick)["yaw"].asDouble();
+                Eigen::AngleAxisd rollAngle(storage_plate_.roll, Eigen::Vector3d::UnitX());
+                Eigen::AngleAxisd pitchAngle(storage_plate_.pitch, Eigen::Vector3d::UnitY());
+                Eigen::AngleAxisd yawAngle(storage_plate_.yaw, Eigen::Vector3d::UnitZ());
+                storage_plate_.quat = yawAngle * pitchAngle * rollAngle;
+                storage_plate_.pose = Eigen::Matrix4d::Identity(4, 4);
+                storage_plate_.pose.block(0, 0, 3, 3) = storage_plate_.quat.matrix();
+                storage_plate_.pose.col(3) << storage_plate_.x, storage_plate_.y, storage_plate_.z, 1;
+                storage_plate_.width = (*brick)["width"].asInt();
+                storage_plate_.height = (*brick)["height"].asInt();
+            }
             x = storage_plate_.x;
             y = storage_plate_.y;
             z = storage_plate_.z;
@@ -64,21 +66,24 @@ void Lego_Gazebo::setup(const std::string& env_setup_fname, const std::string& l
         }
         else if(brick.name().compare("assemble_plate") == 0)
         {
-            assemble_plate_.x = (*brick)["x"].asDouble();
-            assemble_plate_.y = (*brick)["y"].asDouble();
-            assemble_plate_.z = (*brick)["z"].asDouble();
-            assemble_plate_.roll = (*brick)["roll"].asDouble();
-            assemble_plate_.pitch = (*brick)["pitch"].asDouble();
-            assemble_plate_.yaw = (*brick)["yaw"].asDouble();
-            Eigen::AngleAxisd rollAngle(assemble_plate_.roll, Eigen::Vector3d::UnitX());
-            Eigen::AngleAxisd pitchAngle(assemble_plate_.pitch, Eigen::Vector3d::UnitY());
-            Eigen::AngleAxisd yawAngle(assemble_plate_.yaw, Eigen::Vector3d::UnitZ());
-            assemble_plate_.quat = yawAngle * pitchAngle * rollAngle;
-            assemble_plate_.pose = Eigen::Matrix4d::Identity(4, 4);
-            assemble_plate_.pose.block(0, 0, 3, 3) = assemble_plate_.quat.matrix();
-            assemble_plate_.pose.col(3) << assemble_plate_.x, assemble_plate_.y, assemble_plate_.z, 1;
-            assemble_plate_.width = (*brick)["width"].asInt();
-            assemble_plate_.height = (*brick)["height"].asInt();
+            if(use_config_file)
+            {
+                assemble_plate_.x = (*brick)["x"].asDouble();
+                assemble_plate_.y = (*brick)["y"].asDouble();
+                assemble_plate_.z = (*brick)["z"].asDouble();
+                assemble_plate_.roll = (*brick)["roll"].asDouble();
+                assemble_plate_.pitch = (*brick)["pitch"].asDouble();
+                assemble_plate_.yaw = (*brick)["yaw"].asDouble();
+                Eigen::AngleAxisd rollAngle(assemble_plate_.roll, Eigen::Vector3d::UnitX());
+                Eigen::AngleAxisd pitchAngle(assemble_plate_.pitch, Eigen::Vector3d::UnitY());
+                Eigen::AngleAxisd yawAngle(assemble_plate_.yaw, Eigen::Vector3d::UnitZ());
+                assemble_plate_.quat = yawAngle * pitchAngle * rollAngle;
+                assemble_plate_.pose = Eigen::Matrix4d::Identity(4, 4);
+                assemble_plate_.pose.block(0, 0, 3, 3) = assemble_plate_.quat.matrix();
+                assemble_plate_.pose.col(3) << assemble_plate_.x, assemble_plate_.y, assemble_plate_.z, 1;
+                assemble_plate_.width = (*brick)["width"].asInt();
+                assemble_plate_.height = (*brick)["height"].asInt();
+            }
             
             x = assemble_plate_.x;
             y = assemble_plate_.y;
@@ -178,6 +183,7 @@ void Lego_Gazebo::setup(const std::string& env_setup_fname, const std::string& l
             client_.call(setmodelstate_);
         }
     }
+    update_brick_connection();
     usleep(1000 * 1000); 
 }
 
@@ -257,6 +263,31 @@ void Lego_Gazebo::set_DH_tool_disassemble(const std::string& fname)
     tool_disassemble_inv_ = math::PInv(tool_disassemble_inv_);
 }
 
+void Lego_Gazebo::set_assemble_plate_pose(const double& x, const double& y, const double& yaw)
+{
+    assemble_plate_.x = x;
+    assemble_plate_.y = y;
+    assemble_plate_.yaw = yaw;
+    Eigen::AngleAxisd rollAngle(assemble_plate_.roll, Eigen::Vector3d::UnitX());
+    Eigen::AngleAxisd pitchAngle(assemble_plate_.pitch, Eigen::Vector3d::UnitY());
+    Eigen::AngleAxisd yawAngle(assemble_plate_.yaw, Eigen::Vector3d::UnitZ());
+    assemble_plate_.quat = yawAngle * pitchAngle * rollAngle;
+    assemble_plate_.pose.block(0, 0, 3, 3) = assemble_plate_.quat.matrix();
+    assemble_plate_.pose.col(3) << assemble_plate_.x, assemble_plate_.y, assemble_plate_.z, 1;
+}
+
+void Lego_Gazebo::set_storage_plate_pose(const double& x, const double& y, const double& yaw)
+{
+    storage_plate_.x = x;
+    storage_plate_.y = y;
+    storage_plate_.yaw = yaw;
+    Eigen::AngleAxisd rollAngle(storage_plate_.roll, Eigen::Vector3d::UnitX());
+    Eigen::AngleAxisd pitchAngle(storage_plate_.pitch, Eigen::Vector3d::UnitY());
+    Eigen::AngleAxisd yawAngle(storage_plate_.yaw, Eigen::Vector3d::UnitZ());
+    storage_plate_.quat = yawAngle * pitchAngle * rollAngle;
+    storage_plate_.pose.block(0, 0, 3, 3) = storage_plate_.quat.matrix();
+    storage_plate_.pose.col(3) << storage_plate_.x, storage_plate_.y, storage_plate_.z, 1;
+}
 
 void Lego_Gazebo::calc_brick_loc(const lego_brick& brick, const lego_plate& plate, const int& orientation,
                           const int& brick_loc_x, const int& brick_loc_y, const int& brick_loc_z, 
