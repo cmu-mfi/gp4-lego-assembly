@@ -16,7 +16,7 @@
 #include "gp4_lego/SetPose.h"
 
 // HEADER FILES FOR API INTERFACE WITH YK ROBOT
-#include "yk_api/yk_interface.h"
+// #include "yk_api/yk_interface.h"
 
 using namespace std::chrono;
 
