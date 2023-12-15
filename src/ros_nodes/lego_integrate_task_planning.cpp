@@ -215,7 +215,7 @@ int main(int argc, char **argv)
         ros::Subscriber robot_state_sub = nh.subscribe("sim/gp4_lego_bringup/robot_state", ROBOT_DOF * 3, robotStateCallback);
         
         // Communication with other integrated modules
-        ros::Publisher exec_status_pub = nh.advertise<std_msgs::Int64>("execution_status", 1); // 0: executing 1: idle
+        ros::Publisher exec_status_pub = nh.advertise<std_msgs::Int64>("execution_status", 1); // 1: executing 0: idle
         ros::Subscriber task_type_sub = nh.subscribe("task_type", 1, taskTypeCallback); // Assemble: 1/Disassemble: 0
         ros::Subscriber assembly_task_sub = nh.subscribe("assembly_task", 1, assemblyTaskCallback); // Assembly tasks: 0:human, 1: heart, 2:stairs
         ros::Subscriber start_task_sub = nh.subscribe("start_task", 1, startTaskCallback); // 0: no new task, 1: new task comming.
