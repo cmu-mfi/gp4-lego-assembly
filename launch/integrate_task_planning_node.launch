@@ -1,15 +1,14 @@
 <launch>
 	<arg name="namespace" default="sim" />
-    <arg name="config_fname1" default="$(find gp4_lego)/config/user_config_integrate.json" />
 	<group ns="$(arg namespace)">	
 
 		<node name="gp4_lego_integrate_task_planning" pkg="gp4_lego" type="gp4_lego_integrate_task_planning" output="screen" required="true">
-			<param name="config_fname" value="$(arg config_fname1)" />
+			<param name="config_fname" value="$(find gp4_lego)/config/user_config_integrate.json" />
 			<param name="root_pwd" value="$(find gp4_lego)/" />
 			<param if="$(eval namespace == 'yk_creator')" name="x_home" value="0.3" />
-            <param if="$(eval namespace == 'yk_creator')" name="y_home" value="0" />
+            <param if="$(eval namespace == 'yk_creator')" name="y_home" value="0.1" />
             <param if="$(eval namespace == 'yk_builder')" name="x_home" value="0.3" />
-            <param if="$(eval namespace == 'yk_builder')" name="y_home" value="0" />
+            <param if="$(eval namespace == 'yk_builder')" name="y_home" value="0.1" />
             <param if="$(eval namespace == 'yk_architect')" name="x_home" value="0.3" />
             <param if="$(eval namespace == 'yk_architect')" name="y_home" value="0" />
             <param if="$(eval namespace == 'yk_destroyer')" name="x_home" value="0.3" />

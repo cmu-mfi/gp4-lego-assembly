@@ -6,6 +6,7 @@
 #include "ros/ros.h"
 #include <ros/package.h>
 #include "std_msgs/Float32MultiArray.h"
+#include <geometry_msgs/WrenchStamped.h>
 #include <fstream>
 #include <unistd.h>
 
@@ -23,6 +24,12 @@ using namespace std::chrono;
 gp4_lego::math::VectorJd robot_q = Eigen::MatrixXd::Zero(6, 1);
 gp4_lego::math::VectorJd robot_qd = Eigen::MatrixXd::Zero(6, 1);
 gp4_lego::math::VectorJd robot_qdd = Eigen::MatrixXd::Zero(6, 1);
+gp4_lego::math::VectorJd fts_val = Eigen::MatrixXd::Zero(6, 1);
+
+void ftsCallback(const geometry_msgs::WrenchStamped::ConstPtr &msg)
+{
+    fts_val << msg->wrench.force.x, msg->wrench.force.y, msg->wrench.force.z, msg->wrench.torque.x, msg->wrench.torque.y, msg->wrench.torque.z;
+}
 
 void robotStateCallback(const std_msgs::Float32MultiArray::ConstPtr &msg)
 {
@@ -158,6 +165,7 @@ int main(int argc, char **argv)
         // VIRTUAL CONTROLLER INTERFACE ??TODO??
         ros::Publisher goal_pub = nh.advertise<std_msgs::Float32MultiArray>("sim/gp4_lego_bringup/robot_goal", ROBOT_DOF);
         ros::Subscriber robot_state_sub = nh.subscribe("sim/gp4_lego_bringup/robot_state", ROBOT_DOF * 3, robotStateCallback);
+        ros::Subscriber fts_sub = nh.subscribe("/fts", 1, ftsCallback);
 
         // F. MAIN LOOP
         //*****************************************************************************************
@@ -238,6 +246,19 @@ int main(int argc, char **argv)
                     {
                         mode++;
                         twist_idx = 0;
+                    }
+                }
+                else if(mode == 2 || mode == 7)
+                {
+                    if(1)//abs(fts_val(2) - (-5)) < 0.1)//abs(fts_val(0) - 1.2) < 0.1 && abs(fts_val(1) - 0.6) < 0.1 && abs(fts_val(2) - (-5)) < 0.1)
+                    {
+                        mode++;
+                    }
+                    else if(fts_val(2) < -5)
+                    {
+                        Eigen::Matrix4d dT = Eigen::MatrixXd::Identity(4, 4);
+                        dT.col(3) << 0, 0, 0.0005, 1;
+                        cart_T = cart_T * dT;
                     }
                 }
                 else
@@ -363,8 +384,11 @@ int main(int argc, char **argv)
                         ROS_INFO_STREAM("Replay Row: " << (2 * num_tasks - task_idx) * 11 + mode);
                     }
                 }
-                record.row(record_idx) << cur_goal(0), cur_goal(1), cur_goal(2), cur_goal(3), cur_goal(4), cur_goal(5);
-                record_idx ++;
+                if(record_joints)
+                {
+                    record.row(record_idx) << cur_goal(0), cur_goal(1), cur_goal(2), cur_goal(3), cur_goal(4), cur_goal(5);
+                    record_idx ++;
+                }
             }
 
             cart_T_goal = gp4_lego::math::FK(cur_goal, robot->robot_DH(), robot->robot_base(), false);

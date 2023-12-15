@@ -9,7 +9,7 @@
 		<node name="gp4_lego_task_planning_cartesian" pkg="gp4_lego" type="gp4_lego_task_planning_cartesian" output="screen" required="true">
 			<param name="config_fname" value="$(arg config_fname1)" />
 			<param name="root_pwd" value="$(find gp4_lego)/" />
-			<param if="$(eval namespace == 'yk_destroyer')" name="x_home" value="0.1" />
+			<param if="$(eval namespace == 'yk_destroyer')" name="x_home" value="-0.01" />
 			<param if="$(eval namespace == 'yk_destroyer')" name="y_home" value="0.3" />
 			<remap from="$(arg namespace)/robot_state" to="$(arg namespace)/sim/gp4_lego_bringup/robot_state" />
 			<remap from="$(arg namespace)/goal" to="$(arg namespace)/sim/gp4_lego_bringup/robot_goal" />

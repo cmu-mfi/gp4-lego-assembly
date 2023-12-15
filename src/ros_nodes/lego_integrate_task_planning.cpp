@@ -16,7 +16,7 @@
 #include "gp4_lego/SetPose.h"
 
 // HEADER FILES FOR API INTERFACE WITH YK ROBOT
-// #include "yk_api/yk_interface.h"
+#include "yk_api/yk_interface.h"
 
 using namespace std::chrono;
 
@@ -113,13 +113,30 @@ int main(int argc, char **argv)
         std::string DH_tool_disassemble_fname = root_pwd + config["DH_tool_disassemble_fname"].asString();
         std::string robot_base_fname = root_pwd + config["robot_base_fname"].asString();
         std::string gazebo_env_setup_fname = root_pwd + config["env_setup_fname"].asString();
-        std::string task_fname = root_pwd + config["task_graph_fname"].asString();
+        assembly_task_val = config["assembly_task_idx"].asInt64();
+        std::string task_fname;
         std::string lego_lib_fname = root_pwd + config["lego_lib_fname"].asString();
         bool infinite_tasks = false; //config["Infinite_tasks"].asBool();
-        bool assemble = config["Start_with_assemble"].asBool();
+        task_type_val = config["Start_with_assemble"].asInt64();
         bool use_robot = config["Use_robot"].asBool();
         bool use_ik = config["IK"]["Use_IK"].asBool();
         
+        if(assembly_task_val == 0)
+        {
+            task_fname = root_pwd + "/config/assembly_tasks/human.json";
+        }
+        else if(assembly_task_val == 1)
+        {
+            task_fname = root_pwd + "/config/assembly_tasks/heart.json";
+        }
+        else if(assembly_task_val == 2 && task_type_val)
+        {
+            task_fname = root_pwd + "/config/assembly_tasks/wtts.json";
+        }
+        else if(assembly_task_val == 2 && !task_type_val)
+        {
+            task_fname = root_pwd + "/config/assembly_tasks/wtts_disassemble.json";
+        }
         std::ifstream task_file(task_fname, std::ifstream::binary);
         Json::Value task_json;
         task_file >> task_json;
@@ -127,7 +144,7 @@ int main(int argc, char **argv)
         // C. GP4_LEGO INITIALIZATION
         //*****************************************************************************************
         gp4_lego::lego::Lego_Gazebo::Ptr lego_gazebo_ptr = std::make_shared<gp4_lego::lego::Lego_Gazebo>();
-        lego_gazebo_ptr->setup(gazebo_env_setup_fname, lego_lib_fname, assemble, task_json, 
+        lego_gazebo_ptr->setup(gazebo_env_setup_fname, lego_lib_fname, task_type_val, task_json, 
                                DH_fname, DH_tool_fname, DH_tool_disassemble_fname, DH_tool_assemble_fname, 
                                robot_base_fname, 1, set_state_client);
         assembly_plate_pose_val << lego_gazebo_ptr->assemble_plate_x(), lego_gazebo_ptr->assemble_plate_y(), lego_gazebo_ptr->assemble_plate_z(), 
@@ -162,7 +179,7 @@ int main(int argc, char **argv)
 
         int task_idx;
 
-        if (assemble)
+        if (task_type_val)
         {
             task_idx = 1;
         }

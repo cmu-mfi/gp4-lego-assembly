@@ -4,6 +4,8 @@
 	<arg if="$(eval namespace == 'yaskawa_gp4/sim')" name="config_fname1" value="$(find gp4_lego)/config/user_config_A.json" />
 	<arg if="$(eval namespace == 'yk_destroyer/sim')" name="config_fname1" value="$(find gp4_lego)/config/user_config_D.json" />
 	<arg if="$(eval namespace == 'yk_architect/sim')" name="config_fname1" value="$(find gp4_lego)/config/user_config_A.json" />
+	<arg if="$(eval namespace == 'yk_builder/sim')" name="config_fname1" value="$(find gp4_lego)/config/user_config_integrate.json" />
+	<arg if="$(eval namespace == 'yk_creator/sim')" name="config_fname1" value="$(find gp4_lego)/config/user_config_integrate.json" />
 
 	<node name="gp4_lego_bringup" pkg="gp4_lego" type="gp4_lego_bringup" output="screen" required="true">
 		<param name="root_pwd" value="$(find gp4_lego)/" />
