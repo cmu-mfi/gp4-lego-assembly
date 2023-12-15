@@ -24,11 +24,32 @@ using namespace std::chrono;
 gp4_lego::math::VectorJd robot_q = Eigen::MatrixXd::Zero(6, 1);
 gp4_lego::math::VectorJd robot_qd = Eigen::MatrixXd::Zero(6, 1);
 gp4_lego::math::VectorJd robot_qdd = Eigen::MatrixXd::Zero(6, 1);
+int fts_buffer_size = 500;
+Eigen::MatrixXd fts_buffer = Eigen::MatrixXd::Zero(6, fts_buffer_size);
+int fts_buffer_idx = 0;
 gp4_lego::math::VectorJd fts_val = Eigen::MatrixXd::Zero(6, 1);
+gp4_lego::math::VectorJd fts_val_one_step = Eigen::MatrixXd::Zero(6, 1);
 
 void ftsCallback(const geometry_msgs::WrenchStamped::ConstPtr &msg)
 {
-    fts_val << msg->wrench.force.x, msg->wrench.force.y, msg->wrench.force.z, msg->wrench.torque.x, msg->wrench.torque.y, msg->wrench.torque.z;
+    double fx = msg->wrench.force.x;
+    double fy = msg->wrench.force.y;
+    double fz = msg->wrench.force.z;
+    double tx = msg->wrench.torque.x;
+    double ty = msg->wrench.torque.y;
+    double tz = msg->wrench.torque.z;
+    if(fts_buffer_idx < fts_buffer_size)
+    {
+        fts_buffer.col(fts_buffer_idx) << fx, fy, fz, tx, ty, tz;
+        fts_buffer_idx++;
+    }
+    else
+    {
+        fts_buffer.block(0, 0, 6, fts_buffer_size - 2) = fts_buffer.block(0, 1, 6, fts_buffer_size - 1);
+        fts_buffer.col(fts_buffer_size - 1) << fx, fy, fz, tx, ty, tz;
+    }
+    fts_val = fts_buffer.rowwise().mean();
+    fts_val_one_step << fx, fy, fz, tx, ty, tz;
 }
 
 void robotStateCallback(const std_msgs::Float32MultiArray::ConstPtr &msg)
@@ -127,6 +148,8 @@ int main(int argc, char **argv)
         int max_iter = 10e6;
         int grab_brick;
         std_msgs::Float32MultiArray goal_msg;
+        std_msgs::Float32MultiArray fts_avg_msg;
+        std_msgs::Float32MultiArray fts_one_step_msg;
         Eigen::Matrix4d cart_T_goal;
 
         int task_idx;
@@ -166,6 +189,8 @@ int main(int argc, char **argv)
         ros::Publisher goal_pub = nh.advertise<std_msgs::Float32MultiArray>("sim/gp4_lego_bringup/robot_goal", ROBOT_DOF);
         ros::Subscriber robot_state_sub = nh.subscribe("sim/gp4_lego_bringup/robot_state", ROBOT_DOF * 3, robotStateCallback);
         ros::Subscriber fts_sub = nh.subscribe("/fts", 1, ftsCallback);
+        ros::Publisher fts_avg_pub = nh.advertise<std_msgs::Float32MultiArray>("/fts_recv_avg", 6);
+        ros::Publisher fts_one_step_pub = nh.advertise<std_msgs::Float32MultiArray>("/fts_recv_one_step", 6);
 
         // F. MAIN LOOP
         //*****************************************************************************************
@@ -399,11 +424,17 @@ int main(int argc, char **argv)
             //*************************************************************************************
             // F.2.1. Simulation command
             goal_msg.data.clear();
+            fts_one_step_msg.data.clear();
+            fts_avg_msg.data.clear();
             for (int j = 0; j < ROBOT_DOF; j++)
             {
                 goal_msg.data.push_back(cur_goal(j));
+                fts_one_step_msg.data.push_back(fts_val_one_step(j));
+                fts_avg_msg.data.push_back(fts_val(j));
             }
             goal_pub.publish(goal_msg);
+            fts_avg_pub.publish(fts_avg_msg);
+            fts_one_step_pub.publish(fts_one_step_msg);
 
             // F.2.2. Robot command
             if (use_robot)
