@@ -151,6 +151,9 @@ int main(int argc, char **argv)
         std_msgs::Float32MultiArray fts_avg_msg;
         std_msgs::Float32MultiArray fts_one_step_msg;
         Eigen::Matrix4d cart_T_goal;
+        gp4_lego::math::VectorJd pick_offset = Eigen::MatrixXd::Zero(6, 1);
+        pick_offset << -0.005, 0.005, -0.005,  // place brick offset
+                       -0.005, 0.005, -0.0025; // grab brick offset
 
         int task_idx;
 
@@ -194,15 +197,14 @@ int main(int argc, char **argv)
 
         // F. MAIN LOOP
         //*****************************************************************************************
-        int pre_mode = -1;
         gp4_lego::math::VectorJd cur_goal = home_q;
         record.row(record_idx) << cur_goal(0), cur_goal(1), cur_goal(2), cur_goal(3), cur_goal(4), cur_goal(5);
         record_idx ++;
         std::string brick_name;
         bool move_on_to_next = true;
 
-        int mode = 0; // 0:home 1:pick_up 2:pick_down, 3:pick_twist 4:pick_twist_up 5:home
-                      // 6:drop_up 7:drop_down 8:drop_twist 9:drop_twist_up 10:done
+        int mode = 0; // 0:home 1:pick tilt up 2:pick_up 3:pick_down, 4:pick_twist 5:pick_twist_up 6:home
+                      // 7:drop tilt up 8:drop_up 9:drop_down 10:drop_twist 11:drop_twist_up 12:done
 
         while (ros::ok)
         {
@@ -212,25 +214,17 @@ int main(int argc, char **argv)
             robot->set_robot_q(robot_q);
             robot->set_robot_qd(robot_qd);
             robot->set_robot_qdd(robot_qdd);
-            if (mode >= 3 && mode <= 7)
+            if (mode >= 4 && mode <= 9)
             {
-                if (pre_mode != mode)
-                {
-                    lego_gazebo_ptr->update_bricks(robot_q, robot->robot_DH_tool(), robot->robot_base(), false, mode + twist_idx, brick_name);
-                }
-                else
-                {
-                    lego_gazebo_ptr->update_bricks(robot_q, robot->robot_DH_tool(), robot->robot_base(), false, 0, brick_name);
-                }
+                lego_gazebo_ptr->update_bricks(robot_q, robot->robot_DH_tool(), robot->robot_base(), false, brick_name);
             }
-            pre_mode = mode;
             if ((use_robot && move_on_to_next) || (!use_robot && robot->reached_goal(cur_goal) && robot->is_static()))
             {
-                if (mode == 7)
+                if (mode == 9)
                 {
                     lego_gazebo_ptr->update_brick_connection();
                 }
-                if (mode == 10)
+                if (mode == 12)
                 {
                     if (task_idx >= num_tasks && !infinite_tasks && assemble)
                     {
@@ -264,7 +258,7 @@ int main(int argc, char **argv)
                         task_idx--;
                     }
                 }
-                else if (mode == 3 || mode == 8)
+                else if (mode == 4 || mode == 10)
                 {
                     twist_idx++;
                     if (twist_idx == twist_num)
@@ -273,7 +267,7 @@ int main(int argc, char **argv)
                         twist_idx = 0;
                     }
                 }
-                else if(mode == 2 || mode == 7)
+                else if(mode == 3 || mode == 9)
                 {
                     if(1)//abs(fts_val(2) - (-5)) < 0.1)//abs(fts_val(0) - 1.2) < 0.1 && abs(fts_val(1) - 0.6) < 0.1 && abs(fts_val(2) - (-5)) < 0.1)
                     {
@@ -292,7 +286,7 @@ int main(int argc, char **argv)
                 }
                 ROS_INFO_STREAM("Mode: " << mode << " Task: " << task_idx);
 
-                if (mode == 0 || mode == 5 || mode == 10)
+                if (mode == 0 || mode == 6 || mode == 12)
                 {
                     cur_goal = home_q;
                 }
@@ -307,20 +301,32 @@ int main(int argc, char **argv)
                                                           cur_graph_node["z"].asInt(),
                                                           cur_graph_node["ori"].asInt(),
                                                           cur_graph_node["press_side"].asInt(), cart_T);
-                    Eigen::Matrix4d up_T = cart_T;
-                    up_T(2, 3) = up_T(2, 3) + 0.015;
+                    Eigen::Matrix4d offset_T = Eigen::MatrixXd::Identity(4, 4);
+                    offset_T.col(3) << pick_offset(3), pick_offset(4), pick_offset(5) - abs(pick_offset(5)), 1;
+                    offset_T = cart_T * offset_T;
                     if(use_ik)
                     {
-                        cur_goal = gp4_lego::math::IK(cur_goal, up_T.block(0, 3, 3, 1), up_T.block(0, 0, 3, 3),
+                        cur_goal = gp4_lego::math::IK(cur_goal, offset_T.block(0, 3, 3, 1), offset_T.block(0, 0, 3, 3),
                                                       robot->robot_DH_tool(), robot->robot_base(), 0, max_iter, ik_step);
                     }
                     if (!assemble && lego_gazebo_ptr->brick_instock(brick_name))
                     {
                         cur_goal = home_q;
-                        mode = 10;
+                        mode = 12;
                     }
                 }
                 else if (mode == 2)
+                {
+                    Eigen::Matrix4d up_T = Eigen::MatrixXd::Identity(4, 4);
+                    up_T.col(3) << 0, 0, pick_offset(5), 1;
+                    up_T = cart_T * up_T;
+                    if(use_ik)
+                    {
+                        cur_goal = gp4_lego::math::IK(cur_goal, up_T.block(0, 3, 3, 1), up_T.block(0, 0, 3, 3),
+                                                      robot->robot_DH_tool(), robot->robot_base(), 0, max_iter, ik_step);
+                    }
+                }
+                else if (mode == 3)
                 {
                     if(use_ik)
                     {
@@ -328,7 +334,7 @@ int main(int argc, char **argv)
                                                       robot->robot_DH_tool(), robot->robot_base(), 0, max_iter, ik_step);
                     }
                 }
-                else if (mode == 3)
+                else if (mode == 4)
                 {
                     double twist_rad = incremental_deg / 180.0 * PI;
                     twist_R << cos(twist_rad), 0, sin(twist_rad),
@@ -344,7 +350,7 @@ int main(int argc, char **argv)
                                                       robot->robot_DH_tool_disassemble(), robot->robot_base(), 0, max_iter, ik_step);
                     }
                 }
-                else if (mode == 4 || mode == 9)
+                else if (mode == 5 || mode == 11)
                 {
                     cart_T = gp4_lego::math::FK(cur_goal, robot->robot_DH_tool_assemble(), robot->robot_base(), false);
                     cart_T(2, 3) = cart_T(2, 3) + 0.015;
@@ -354,7 +360,7 @@ int main(int argc, char **argv)
                                                       robot->robot_DH_tool_assemble(), robot->robot_base(), 0, max_iter, ik_step);
                     }
                 }
-                else if (mode == 6)
+                else if (mode == 7)
                 {
                     auto cur_graph_node = task_json[std::to_string(task_idx)];
                     grab_brick = 0;
@@ -364,15 +370,27 @@ int main(int argc, char **argv)
                                                           cur_graph_node["z"].asInt(),
                                                           cur_graph_node["ori"].asInt(),
                                                           cur_graph_node["press_side"].asInt(), cart_T);
-                    Eigen::Matrix4d up_T = cart_T;
-                    up_T(2, 3) = up_T(2, 3) + 0.015;
+                    Eigen::Matrix4d offset_T = Eigen::MatrixXd::Identity(4, 4);
+                    offset_T.col(3) << pick_offset(0), pick_offset(1), pick_offset(2) - abs(pick_offset(2)), 1;
+                    offset_T = cart_T * offset_T;
+                    if(use_ik)
+                    {
+                        cur_goal = gp4_lego::math::IK(cur_goal, offset_T.block(0, 3, 3, 1), offset_T.block(0, 0, 3, 3),
+                                                      robot->robot_DH_tool(), robot->robot_base(), 0, max_iter, ik_step);
+                    }
+                }
+                else if (mode == 8)
+                {   
+                    Eigen::Matrix4d up_T = Eigen::MatrixXd::Identity(4, 4);
+                    up_T.col(3) << 0, 0, pick_offset(2), 1;
+                    up_T = cart_T * up_T;
                     if(use_ik)
                     {
                         cur_goal = gp4_lego::math::IK(cur_goal, up_T.block(0, 3, 3, 1), up_T.block(0, 0, 3, 3),
                                                       robot->robot_DH_tool(), robot->robot_base(), 0, max_iter, ik_step);
                     }
                 }
-                else if (mode == 7)
+                else if (mode == 9)
                 {
                     if(use_ik)
                     {
@@ -380,7 +398,7 @@ int main(int argc, char **argv)
                                                       robot->robot_DH_tool(), robot->robot_base(), 0, max_iter, ik_step);
                     }
                 }
-                else if (mode == 8)
+                else if (mode == 10)
                 {
                     double twist_rad = incremental_deg / 180.0 * PI;
                     twist_R << cos(-twist_rad), 0, sin(-twist_rad),

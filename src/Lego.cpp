@@ -910,7 +910,7 @@ void Lego_Gazebo::update(const std::string& brick_name, const Eigen::Matrix4d& T
 }
 
 void Lego_Gazebo::update_bricks(const math::VectorJd& robot_q, const Eigen::MatrixXd& DH, const Eigen::MatrixXd& base_frame, 
-                                const bool& joint_rad, const int& task_mode, const std::string& brick_name)
+                                const bool& joint_rad, const std::string& brick_name)
 {
     Eigen::Matrix4d T = math::FK(robot_q, DH, base_frame, joint_rad);
     Eigen::Matrix4d tmp;

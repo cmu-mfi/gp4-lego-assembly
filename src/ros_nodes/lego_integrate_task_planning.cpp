@@ -225,7 +225,6 @@ int main(int argc, char **argv)
 
         // F. MAIN LOOP
         //*****************************************************************************************
-        int pre_mode = -1;
         gp4_lego::math::VectorJd cur_goal = home_q;
         std::string brick_name;
         bool move_on_to_next = true;
@@ -279,7 +278,6 @@ int main(int argc, char **argv)
                     ROS_INFO_STREAM("Disassembling!");
                 }
                 ROS_INFO_STREAM("Num steps: " << num_tasks);
-                pre_mode = -1;
                 cur_goal = home_q;
                 move_on_to_next = true;
                 
@@ -293,16 +291,8 @@ int main(int argc, char **argv)
                 robot->set_robot_qdd(robot_qdd);
                 if (mode >= 3 && mode <= 7)
                 {
-                    if (pre_mode != mode)
-                    {
-                        lego_gazebo_ptr->update_bricks(robot_q, robot->robot_DH_tool(), robot->robot_base(), false, mode + twist_idx, brick_name);
-                    }
-                    else
-                    {
-                        lego_gazebo_ptr->update_bricks(robot_q, robot->robot_DH_tool(), robot->robot_base(), false, 0, brick_name);
-                    }
+                        lego_gazebo_ptr->update_bricks(robot_q, robot->robot_DH_tool(), robot->robot_base(), false, brick_name);
                 }
-                pre_mode = mode;
                 if ((use_robot && move_on_to_next) || (!use_robot && robot->reached_goal(cur_goal) && robot->is_static()))
                 {
                     if (mode == 7)

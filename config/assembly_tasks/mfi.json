@@ -1,7 +1,7 @@
 {
     "1":
     {
-        "y":10,
+        "y":20,
         "x":20,
         "z":1,
         "brick_id":9,
@@ -17,12 +17,12 @@
         "brick_id":6,
         "ori":1,
         "brick_seq":1,
-        "press_side":4
+        "press_side":1
     },
     "3":
     {
         "y":10,
-        "x":18,
+        "x":20,
         "z":1,
         "brick_id":9,
         "ori":0,
@@ -47,7 +47,7 @@
         "brick_id":2,
         "ori":1,
         "brick_seq":1,
-        "press_side":1
+        "press_side":2
     },
     "6":
     {
@@ -61,8 +61,8 @@
     },
     "7":
     {
-        "y":20,
-        "x":20,
+        "y":10,
+        "x":18,
         "z":1,
         "brick_id":9,
         "ori":0,

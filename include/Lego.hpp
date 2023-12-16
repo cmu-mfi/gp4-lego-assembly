@@ -104,7 +104,7 @@ class Lego_Gazebo
         void set_storage_plate_pose(const double& x, const double& y, const double& yaw);
 
         void update_bricks(const math::VectorJd& robot_q, const Eigen::MatrixXd& DH, const Eigen::MatrixXd& base_frame, 
-                           const bool& joint_rad, const int& task_mode, const std::string& brick_name);
+                           const bool& joint_rad, const std::string& brick_name);
         std::string get_brick_name_by_id(const int& id, const int& seq_id);
         void update_brick_connection();
         void calc_brick_grab_pose(const std::string& name, const bool& assemble_pose, const bool& take_brick,
