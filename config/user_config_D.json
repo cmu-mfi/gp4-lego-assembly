@@ -11,6 +11,7 @@
     "Infinite_tasks":1,
     "Start_with_assemble":1,
     "Use_robot":1,
+    "FTS_feedback":1,
     "IK":
     {
         "Use_IK":1,

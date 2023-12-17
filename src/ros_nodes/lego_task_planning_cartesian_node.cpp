@@ -24,7 +24,7 @@ using namespace std::chrono;
 gp4_lego::math::VectorJd robot_q = Eigen::MatrixXd::Zero(6, 1);
 gp4_lego::math::VectorJd robot_qd = Eigen::MatrixXd::Zero(6, 1);
 gp4_lego::math::VectorJd robot_qdd = Eigen::MatrixXd::Zero(6, 1);
-int fts_buffer_size = 500;
+int fts_buffer_size = 2;
 Eigen::MatrixXd fts_buffer = Eigen::MatrixXd::Zero(6, fts_buffer_size);
 int fts_buffer_idx = 0;
 gp4_lego::math::VectorJd fts_val = Eigen::MatrixXd::Zero(6, 1);
@@ -45,7 +45,7 @@ void ftsCallback(const geometry_msgs::WrenchStamped::ConstPtr &msg)
     }
     else
     {
-        fts_buffer.block(0, 0, 6, fts_buffer_size - 2) = fts_buffer.block(0, 1, 6, fts_buffer_size - 1);
+        fts_buffer.block(0, 0, 6, fts_buffer_size - 1) << fts_buffer.block(0, 1, 6, fts_buffer_size - 1);
         fts_buffer.col(fts_buffer_size - 1) << fx, fy, fz, tx, ty, tz;
     }
     fts_val = fts_buffer.rowwise().mean();
@@ -105,6 +105,7 @@ int main(int argc, char **argv)
         bool use_robot = config["Use_robot"].asBool();
         bool use_ik = config["IK"]["Use_IK"].asBool();
         bool record_joints = config["IK"]["Record_Joint_Waypoints"].asBool();
+        bool fts_feedback = config["FTS_feedback"].asBool();
         std::string record_waypoints_fname = root_pwd + config["IK"]["Record_Waypoints_fname"].asString();
         Eigen::MatrixXd waypoints(500, ROBOT_DOF);
         if(!use_ik)
@@ -152,8 +153,15 @@ int main(int argc, char **argv)
         std_msgs::Float32MultiArray fts_one_step_msg;
         Eigen::Matrix4d cart_T_goal;
         gp4_lego::math::VectorJd pick_offset = Eigen::MatrixXd::Zero(6, 1);
+
+        // Attack angle
         pick_offset << -0.005, 0.005, -0.005,  // place brick offset
-                       -0.005, 0.005, -0.0025; // grab brick offset
+                       -0.005, 0.005, -0.0028; // grab brick offset
+        // FTS feedback param
+        double nominal_x_force = 0.8;
+        double nominal_y_force = 1.2;
+        double nominal_z_force = -12;
+        double force_tolerance = 3;
 
         int task_idx;
 
@@ -269,15 +277,28 @@ int main(int argc, char **argv)
                 }
                 else if(mode == 3 || mode == 9)
                 {
-                    if(1)//abs(fts_val(2) - (-5)) < 0.1)//abs(fts_val(0) - 1.2) < 0.1 && abs(fts_val(1) - 0.6) < 0.1 && abs(fts_val(2) - (-5)) < 0.1)
+                    if(fts_feedback)
                     {
-                        mode++;
-                    }
-                    else if(fts_val(2) < -5)
-                    {
-                        Eigen::Matrix4d dT = Eigen::MatrixXd::Identity(4, 4);
-                        dT.col(3) << 0, 0, 0.0005, 1;
-                        cart_T = cart_T * dT;
+                        usleep(0.5 * second);
+                        ROS_INFO_STREAM("Before pose: " << cart_T(0, 3) << " " << cart_T(1, 3) << " " << cart_T(2, 3));
+                        ROS_INFO_STREAM("Force: " << fts_val_one_step(0) << " " << fts_val_one_step(1) << " " << fts_val_one_step(2));
+                        if(abs(fts_val_one_step(2) - (nominal_z_force)) < force_tolerance)//abs(fts_val(0) - 1.2) < 0.1 && abs(fts_val(1) - 0.6) < 0.1 && abs(fts_val(2) - (-5)) < 0.1)
+                        {
+                            mode++;
+                        }
+                        else if(fts_val_one_step(2) < nominal_z_force) // Lift up
+                        {
+                            Eigen::Matrix4d dT = Eigen::MatrixXd::Identity(4, 4);
+                            dT.col(3) << 0, 0, -0.0005, 1;
+                            cart_T = cart_T * dT;
+                        }
+                        else if(fts_val_one_step(2) > nominal_z_force) // Press down
+                        {
+                            Eigen::Matrix4d dT = Eigen::MatrixXd::Identity(4, 4);
+                            dT.col(3) << 0, 0, 0.0001, 1;
+                            cart_T = cart_T * dT;
+                        }
+                        ROS_INFO_STREAM("After pose: " << cart_T(0, 3) << " " << cart_T(1, 3) << " " << cart_T(2, 3));
                     }
                 }
                 else
