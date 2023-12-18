@@ -300,6 +300,9 @@ int main(int argc, char **argv)
                         }
                         ROS_INFO_STREAM("After pose: " << cart_T(0, 3) << " " << cart_T(1, 3) << " " << cart_T(2, 3));
                     }
+                    else{
+                        mode++;
+                    }
                 }
                 else
                 {
