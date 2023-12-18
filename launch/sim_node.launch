@@ -1,0 +1,11 @@
+<launch>
+	<arg name="namespace" default="sim" />
+	<group ns="$(arg namespace)">
+
+		<node name="gp4_lego_sim_task_planning" pkg="gp4_lego" type="gp4_lego_sim_task_planning" output="screen" required="true">
+			<param name="config_fname" value="$(find gp4_lego)/config/user_config_sim.json" />
+			<param name="root_pwd" value="$(find gp4_lego)/" />
+		</node>
+
+	</group>
+</launch>

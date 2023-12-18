@@ -111,5 +111,19 @@ target_link_libraries(${PROJECT_NAME}_integrate_task_planning
   ${catkin_LIBRARIES}
 )
 
+add_executable(${PROJECT_NAME}_sim_task_planning
+  src/ros_nodes/lego_sim.cpp
+)
+
+add_dependencies(${PROJECT_NAME}_sim_task_planning
+  ${${PROJECT_NAME}_EXPORTED_TARGETS}
+  ${catkin_EXPORTED_TARGETS}
+)
+
+target_link_libraries(${PROJECT_NAME}_sim_task_planning
+  ${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+
 install(DIRECTORY launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
