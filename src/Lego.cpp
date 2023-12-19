@@ -263,10 +263,13 @@ void Lego_Gazebo::set_DH_tool_disassemble(const std::string& fname)
     tool_disassemble_inv_ = math::PInv(tool_disassemble_inv_);
 }
 
-void Lego_Gazebo::set_assemble_plate_pose(const double& x, const double& y, const double& yaw)
+void Lego_Gazebo::set_assemble_plate_pose(const double& x, const double& y, const double& z, const double& roll, const double& pitch, const double& yaw)
 {
     assemble_plate_.x = x;
     assemble_plate_.y = y;
+    assemble_plate_.z = z;
+    assemble_plate_.roll = roll;
+    assemble_plate_.pitch = pitch;
     assemble_plate_.yaw = yaw;
     Eigen::AngleAxisd rollAngle(assemble_plate_.roll, Eigen::Vector3d::UnitX());
     Eigen::AngleAxisd pitchAngle(assemble_plate_.pitch, Eigen::Vector3d::UnitY());
@@ -276,10 +279,13 @@ void Lego_Gazebo::set_assemble_plate_pose(const double& x, const double& y, cons
     assemble_plate_.pose.col(3) << assemble_plate_.x, assemble_plate_.y, assemble_plate_.z, 1;
 }
 
-void Lego_Gazebo::set_storage_plate_pose(const double& x, const double& y, const double& yaw)
+void Lego_Gazebo::set_storage_plate_pose(const double& x, const double& y, const double& z, const double& roll, const double& pitch, const double& yaw)
 {
     storage_plate_.x = x;
     storage_plate_.y = y;
+    storage_plate_.z = z;
+    storage_plate_.roll = roll;
+    storage_plate_.pitch = pitch;
     storage_plate_.yaw = yaw;
     Eigen::AngleAxisd rollAngle(storage_plate_.roll, Eigen::Vector3d::UnitX());
     Eigen::AngleAxisd pitchAngle(storage_plate_.pitch, Eigen::Vector3d::UnitY());

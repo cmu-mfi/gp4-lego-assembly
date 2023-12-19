@@ -260,8 +260,8 @@ int main(int argc, char **argv)
                 }
                 std::ifstream task_file(task_fname, std::ifstream::binary);
                 task_file >> task_json;
-                lego_gazebo_ptr->set_assemble_plate_pose(assembly_plate_pose_val[0], assembly_plate_pose_val[1], assembly_plate_pose_val[5]);
-                lego_gazebo_ptr->set_storage_plate_pose(kit_plate_pose_val[0], kit_plate_pose_val[1], kit_plate_pose_val[5]);
+                lego_gazebo_ptr->set_assemble_plate_pose(assembly_plate_pose_val[0], assembly_plate_pose_val[1], assembly_plate_pose_val[2], assembly_plate_pose_val[3], assembly_plate_pose_val[4], assembly_plate_pose_val[5]);
+                lego_gazebo_ptr->set_storage_plate_pose(kit_plate_pose_val[0], kit_plate_pose_val[1], kit_plate_pose_val[2], kit_plate_pose_val[3], kit_plate_pose_val[4], kit_plate_pose_val[5]);
                 lego_gazebo_ptr->setup(gazebo_env_setup_fname, lego_lib_fname, task_type_val, task_json, 
                                        DH_fname, DH_tool_fname, DH_tool_disassemble_fname, DH_tool_assemble_fname, 
                                        robot_base_fname, 0, set_state_client);

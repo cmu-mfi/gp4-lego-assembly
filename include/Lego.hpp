@@ -100,8 +100,8 @@ class Lego_Gazebo
         void set_DH_tool_assemble(const std::string& DH_tool_assemble_fname);
         void set_DH_tool_disassemble(const std::string& DH_tool_disassemble_fname);
         void print_manipulation_property();
-        void set_assemble_plate_pose(const double& x, const double& y, const double& yaw);
-        void set_storage_plate_pose(const double& x, const double& y, const double& yaw);
+        void set_assemble_plate_pose(const double& x, const double& y, const double& z, const double& roll, const double& pitch, const double& yaw);
+        void set_storage_plate_pose(const double& x, const double& y, const double& z, const double& roll, const double& pitch, const double& yaw);
 
         void update_bricks(const math::VectorJd& robot_q, const Eigen::MatrixXd& DH, const Eigen::MatrixXd& base_frame, 
                            const bool& joint_rad, const std::string& brick_name);
