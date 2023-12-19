@@ -653,8 +653,7 @@ std::string Lego_Gazebo::get_brick_name_by_id(const int& id, const int& seq_id)
 void Lego_Gazebo::get_brick_corners(const lego_brick& b1, double& lx, double& ly, double& rx, double& ry)
 {
     // Landscape orientation
-    if(math::ApproxEqNum(b1.cur_quat.x(), 0,EPS_) && math::ApproxEqNum(b1.cur_quat.y(), 0,EPS_) && math::ApproxEqNum(b1.cur_quat.z(), 0,EPS_) ||
-       math::ApproxEqNum(b1.cur_quat.x(), 0,EPS_) && math::ApproxEqNum(b1.cur_quat.y(), 0,EPS_) && math::ApproxEqNum(b1.cur_quat.z(), 1,EPS_))
+    if((math::ApproxEqNum(b1.cur_quat.x(), 0,EPS_*10000) && math::ApproxEqNum(b1.cur_quat.y(), 0,EPS_*10000) && math::ApproxEqNum(b1.cur_quat.z(), 0,EPS_*10000) && math::ApproxEqNum(b1.cur_quat.w(), 1,EPS_*10000)))
     {
         lx = b1.cur_x - (b1.height * P_len_ - brick_len_offset_) / 2.0;
         ly = b1.cur_y - (b1.width * P_len_ - brick_len_offset_) / 2.0;
