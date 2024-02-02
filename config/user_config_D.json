@@ -9,9 +9,9 @@
     "lego_lib_fname":"/config/lego_library.json",
     "JPC_travel_time":0.5,
     "Infinite_tasks":1,
-    "Start_with_assemble":1,
+    "Start_with_assemble":0,
     "Use_robot":1,
-    "FTS_feedback":1,
+    "FTS_feedback":0,
     "IK":
     {
         "Use_IK":1,
