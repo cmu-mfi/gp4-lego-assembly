@@ -7,6 +7,7 @@
 #include <ros/package.h>
 #include "std_msgs/Float32MultiArray.h"
 #include "std_msgs/Int64.h"
+#include "std_msgs/Bool.h"
 #include <geometry_msgs/WrenchStamped.h>
 #include <fstream>
 #include <unistd.h>
@@ -32,6 +33,7 @@ int executing = 0;
 gp4_lego::math::VectorJd assembly_plate_pose_val = Eigen::MatrixXd::Zero(6, 1);
 gp4_lego::math::VectorJd kit_plate_pose_val = Eigen::MatrixXd::Zero(6, 1);
 gp4_lego::math::VectorJd fts_val = Eigen::MatrixXd::Zero(6, 1);
+bool allok = true;
 
 void robotStateCallback(const std_msgs::Float32MultiArray::ConstPtr &msg)
 {
@@ -57,6 +59,7 @@ void assemblyTaskCallback(const std_msgs::Int64::ConstPtr &msg)
 void startTaskCallback(const std_msgs::Int64::ConstPtr &msg)
 {
     start_task_val = msg->data;
+    allok = start_task_val?true:allok;
 }
 
 void assemblyPlateStateCallback(const std_msgs::Float32MultiArray::ConstPtr &msg)
@@ -72,6 +75,11 @@ void kitPlateStateCallback(const std_msgs::Float32MultiArray::ConstPtr &msg)
 void ftsCallback(const geometry_msgs::WrenchStamped::ConstPtr &msg)
 {
     fts_val << msg->wrench.force.x, msg->wrench.force.y, msg->wrench.force.z, msg->wrench.torque.x, msg->wrench.torque.y, msg->wrench.torque.z;
+}
+
+void allokCallback(const std_msgs::Bool::ConstPtr &msg)
+{
+    allok = msg->data;
 }
 
 int main(int argc, char **argv)
@@ -222,6 +230,7 @@ int main(int argc, char **argv)
         ros::Subscriber assembly_plate_state_sub = nh.subscribe("assembly_plate_state", 6, assemblyPlateStateCallback); // X, Y, Yaw
         ros::Subscriber kit_plate_state_sub = nh.subscribe("kit_plate_state", 6, kitPlateStateCallback); // X, Y, Yaw
         ros::Subscriber fts_sub = nh.subscribe("/fts", 1, ftsCallback);
+        ros::Subscriber allok_sub = nh.subscribe("gp4_allok", 1, allokCallback); // 1: all ok, 0: not all ok
 
         // F. MAIN LOOP
         //*****************************************************************************************
@@ -238,7 +247,7 @@ int main(int argc, char **argv)
             //*************************************************************************************
             
             // new task coming
-            if(!executing && start_task_val)
+            if(!executing && start_task_val && allok)
             {
                 ROS_INFO_STREAM("\n\nReset environment!");
                 executing = 1;
@@ -284,7 +293,7 @@ int main(int argc, char **argv)
                 mode = 0; // 0:home 1:pick_up 2:pick_down, 3:pick_twist 4:pick_twist_up 5:home
                             // 6:drop_up 7:drop_down 8:drop_twist 9:drop_twist_up 10:done
             }
-            if(executing)
+            if(executing && allok)
             {
                 robot->set_robot_q(robot_q);
                 robot->set_robot_qd(robot_qd);
@@ -483,8 +492,17 @@ int main(int argc, char **argv)
                     }
                 }
             }
-            exec_msg.data = executing;
-            exec_status_pub.publish(exec_msg);
+            
+            if(!allok)
+            {
+                ROS_INFO_STREAM("Aborting Task Execution!");
+                executing = 0;
+                exec_msg.data = executing;
+                exec_status_pub.publish(exec_msg);
+            } else {
+                exec_msg.data = executing;
+                exec_status_pub.publish(exec_msg);
+            }
         }
 
         ROS_INFO_STREAM("Task Execution Done!");

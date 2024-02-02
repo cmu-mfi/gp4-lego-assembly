@@ -495,6 +495,7 @@ int main(int argc, char **argv)
                     goal_pose.orientation.z = quat.z();
                     goal_pose.orientation.w = quat.w();
                     move_on_to_next = false;
+                    ROS_INFO_STREAM("Sending q: " << "\n" << cur_goal);
                     ROS_INFO_STREAM("Sending pose: " << goal_pose);
                     motion_start = high_resolution_clock::now();
                 }
